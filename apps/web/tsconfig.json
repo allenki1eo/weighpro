@@ -5,8 +5,7 @@
     "incremental": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"],
-      "@weighpro/core": ["../../packages/core/src/index.ts"]
+      "@/*": ["./*"]
     },
     "plugins": [
       {
