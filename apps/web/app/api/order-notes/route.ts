@@ -5,6 +5,10 @@ import { createServiceSupabaseClient } from "../../../lib/supabase";
 
 const orderNoteSchema = z.object({
   externalNoteId: z.string().min(1),
+  businessUnit: z.string().optional(),
+  movementType: z.string().optional(),
+  materialCategory: z.string().optional(),
+  counterpartyName: z.string().optional(),
   customerName: z.string().min(1),
   vehiclePlate: z.string().min(1),
   driverName: z.string().optional(),
@@ -54,6 +58,10 @@ export async function POST(request: Request) {
     .upsert(
       {
         external_note_id: payload.data.externalNoteId,
+        business_unit: payload.data.businessUnit ?? null,
+        movement_type: payload.data.movementType ?? null,
+        material_category: payload.data.materialCategory ?? null,
+        counterparty_name: payload.data.counterpartyName ?? null,
         customer_name: payload.data.customerName,
         vehicle_id: vehicle.id,
         vehicle_plate: normalizedPlate,
@@ -76,8 +84,8 @@ export async function POST(request: Request) {
   }
 
   await supabase.from("integration_events").insert({
-    source: "order-platform",
-    event_type: "order_note.upserted",
+    source: "business-system",
+    event_type: "movement_note.upserted",
     external_id: payload.data.externalNoteId,
     status: "processed",
     payload: payload.data,
