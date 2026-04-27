@@ -25,6 +25,10 @@ create table public.vehicles (
 create table public.order_notes (
   id uuid primary key default gen_random_uuid(),
   external_note_id text not null unique,
+  business_unit text,
+  movement_type text,
+  material_category text,
+  counterparty_name text,
   customer_name text not null,
   vehicle_id uuid references public.vehicles(id),
   vehicle_plate text not null,
@@ -98,6 +102,8 @@ create table public.integration_events (
 
 create index order_notes_vehicle_plate_idx on public.order_notes(vehicle_plate);
 create index order_notes_scheduled_at_idx on public.order_notes(scheduled_at);
+create index order_notes_movement_type_idx on public.order_notes(movement_type);
+create index order_notes_material_category_idx on public.order_notes(material_category);
 create index weigh_sessions_status_idx on public.weigh_sessions(status);
 create index camera_reads_plate_idx on public.camera_reads(plate);
 
