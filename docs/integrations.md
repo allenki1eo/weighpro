@@ -32,6 +32,28 @@ Example payload:
 
 The endpoint upserts the vehicle and movement note so duplicate pushes are safe.
 
+For raw cotton movements, include AMCOS transport details so WeighPro can calculate fuel support:
+
+```json
+{
+  "externalNoteId": "COT-2026-00041",
+  "businessUnit": "GAKI Investment",
+  "movementType": "raw_material_receipt",
+  "materialCategory": "raw_cotton",
+  "counterpartyName": "Mwenge AMCOS",
+  "customerName": "Mwenge AMCOS",
+  "vehiclePlate": "T123ABC",
+  "product": "Seed cotton",
+  "amcosName": "Mwenge AMCOS",
+  "collectionPoint": "Maswa",
+  "distanceKm": 74,
+  "fuelRatePerKm": 1800,
+  "fuelCurrency": "TZS"
+}
+```
+
+Fuel payable amount is calculated as `distanceKm * fuelRatePerKm` and stored with the movement note.
+
 ## XK3190-DS1
 
 The station bridge reads from the serial port configured by:
