@@ -29,6 +29,18 @@ create table public.order_notes (
   movement_type text,
   material_category text,
   counterparty_name text,
+  amcos_name text,
+  collection_point text,
+  distance_km numeric,
+  fuel_rate_per_km numeric,
+  fuel_currency text not null default 'TZS',
+  fuel_payable_amount numeric generated always as (
+    case
+      when distance_km is not null and fuel_rate_per_km is not null
+      then distance_km * fuel_rate_per_km
+      else null
+    end
+  ) stored,
   customer_name text not null,
   vehicle_id uuid references public.vehicles(id),
   vehicle_plate text not null,
@@ -104,6 +116,7 @@ create index order_notes_vehicle_plate_idx on public.order_notes(vehicle_plate);
 create index order_notes_scheduled_at_idx on public.order_notes(scheduled_at);
 create index order_notes_movement_type_idx on public.order_notes(movement_type);
 create index order_notes_material_category_idx on public.order_notes(material_category);
+create index order_notes_amcos_name_idx on public.order_notes(amcos_name);
 create index weigh_sessions_status_idx on public.weigh_sessions(status);
 create index camera_reads_plate_idx on public.camera_reads(plate);
 
