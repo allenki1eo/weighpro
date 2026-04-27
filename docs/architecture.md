@@ -2,7 +2,7 @@
 
 ## Goal
 
-Create one system that serves both the physical weighbridge station and clerks working away from the station.
+Create one system that serves both the physical weighbridge station and clerks working away from the station. The system should support all company vehicle movements, not only drinks dispatches.
 
 ## Main parts
 
@@ -10,7 +10,7 @@ Create one system that serves both the physical weighbridge station and clerks w
 
 The web app is the daily operating surface. Clerks can:
 
-- see pending order notes from the drinks order platform
+- see pending movement notes from customer order software, procurement, production, stores, or dispatch
 - match vehicles by plate number
 - open first-weigh and second-weigh sessions
 - review live or last stable weight from the bridge station
@@ -29,7 +29,7 @@ The Electron app runs on the weighbridge computer. It is responsible for hardwar
 
 Supabase is the shared source of truth:
 
-- imported request notes
+- imported request and movement notes
 - known vehicles and plates
 - weigh sessions
 - first and second weigh events
@@ -41,18 +41,18 @@ Supabase is the shared source of truth:
 The camera pipeline should capture a plate read, then search for:
 
 1. an active weigh session with that plate
-2. a pending imported order with that plate
+2. a pending imported movement note with that plate
 3. recent first-weigh sessions needing a second weigh
 
 When a match is found, the clerk should land directly on the right workflow instead of typing details again.
 
 ## Weighing workflow
 
-1. Order platform pushes a request note into WeighPro.
+1. A business system or clerk creates a movement note in WeighPro.
 2. Vehicle arrives and the camera reads the plate.
 3. WeighPro matches the plate against pending orders or open sessions.
 4. Clerk confirms first weight.
-5. Vehicle loads or unloads drinks.
+5. Vehicle loads or unloads raw materials, packaging, finished products, or returns.
 6. Vehicle returns and the camera finds the existing session.
 7. Clerk confirms second weight.
 8. Net weight and ticket are finalized.
