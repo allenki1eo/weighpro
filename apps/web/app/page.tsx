@@ -58,7 +58,7 @@ export default function Home() {
         <div className="topbar">
           <div>
             <h1>Weighbridge control</h1>
-            <p className="subtle">Order-linked vehicle weighing, camera matching, and station hardware status.</p>
+            <p className="subtle">Company-wide vehicle weighing, camera matching, and station hardware status.</p>
           </div>
           <div className="toolbar">
             <button className="button" title="Refresh station data">
@@ -96,7 +96,7 @@ export default function Home() {
             <div className="band-header">
               <div>
                 <h2>Active sessions</h2>
-                <p className="subtle">Camera reads and imported request notes guide the clerk to the right vehicle.</p>
+                <p className="subtle">Camera reads and imported movement notes guide the clerk to the right vehicle.</p>
               </div>
               <button className="button" title="Search vehicles and sessions">
                 <Search size={17} />
@@ -176,7 +176,7 @@ export default function Home() {
                   </div>
                   <div className="field">
                     <label htmlFor="product">Product</label>
-                    <input id="product" defaultValue="Bottled drinks" />
+                    <input id="product" defaultValue="Finished goods dispatch" />
                   </div>
                   <div className="field">
                     <label htmlFor="mode">Mode</label>
