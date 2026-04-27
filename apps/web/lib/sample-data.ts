@@ -1,4 +1,16 @@
-import type { WeighSessionSummary } from "@weighpro/core";
+type WeighSessionStatus = "awaiting_first_weight" | "awaiting_second_weight" | "completed" | "cancelled";
+
+interface WeighSessionSummary {
+  id: string;
+  plate: string;
+  customerName: string;
+  product: string;
+  status: WeighSessionStatus;
+  firstWeightKg?: number;
+  secondWeightKg?: number;
+  netWeightKg?: number;
+  lastPlateConfidence?: number;
+}
 
 export const sessions: WeighSessionSummary[] = [
   {
