@@ -1,6 +1,5 @@
 import {
   Activity,
-  Camera,
   ClipboardCheck,
   Fuel,
   Gauge,
@@ -12,7 +11,6 @@ import {
   Search,
   Settings,
   ShieldCheck,
-  Truck,
   Wifi,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
