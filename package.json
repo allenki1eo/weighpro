@@ -8,11 +8,11 @@
     "packages/*"
   ],
   "scripts": {
-    "dev:web": "npm --workspace @weighpro/core run build && npm --workspace apps/web run dev",
-    "dev:desktop": "npm --workspace @weighpro/core run build && npm --workspace apps/desktop run dev",
-    "build": "npm run build --workspaces",
-    "typecheck": "npm run typecheck --workspaces",
-    "lint": "npm run lint --workspaces"
+    "dev:web": "npm --workspace @weighpro/core run build && npm --workspace @weighpro/web run dev",
+    "dev:desktop": "npm --workspace @weighpro/core run build && npm --workspace @weighpro/desktop run dev",
+    "build": "npm --workspace @weighpro/core run build && npm --workspace @weighpro/web run build && npm --workspace @weighpro/desktop run build",
+    "typecheck": "npm --workspace @weighpro/core run build && npm --workspace @weighpro/web run typecheck && npm --workspace @weighpro/desktop run typecheck",
+    "lint": "npm --workspace @weighpro/core run build && npm --workspace @weighpro/web run lint && npm --workspace @weighpro/desktop run lint"
   },
   "devDependencies": {
     "prettier": "^3.3.3",
