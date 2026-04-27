@@ -1,6 +1,6 @@
 # WeighPro
 
-WeighPro is a modern weighbridge system for drink-order logistics. It is designed to reduce manual writing at the weighbridge by importing request notes from an external order platform, matching vehicles by plate number, and guiding clerks through first and second weighs.
+WeighPro is a modern weighbridge system for company-wide vehicle weighing. It is designed for GAKI Investment and East African Spirits style operations where vehicles may carry raw cotton, lint bales, packaging materials, production inputs, finished goods, returns, or customer-order dispatches.
 
 ## What is included
 
@@ -20,6 +20,6 @@ WeighPro is a modern weighbridge system for drink-order logistics. It is designe
 
 ## Integration shape
 
-External order platform -> `POST /api/order-notes` -> Supabase order records -> camera plate match -> active weigh session -> serial weight capture from XK3190-DS1 -> first/second weigh completion.
+External business system -> `POST /api/order-notes` -> Supabase movement records -> camera plate match -> active weigh session -> serial weight capture from XK3190-DS1 -> first/second weigh completion.
 
 The XK3190-DS1 has a standard RS232 serial communication interface. The starter parser accepts common XK3190-style ASCII frames and should be confirmed against the exact indicator configuration on site.
