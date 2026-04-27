@@ -57,3 +57,53 @@ export const pendingOrders = [
     scheduledAt: "09:15",
   },
 ];
+
+export const stationDevices = [
+  { name: "XK3190-DS1 indicator", status: "connected", detail: "COM3 / 9600 baud" },
+  { name: "ANPR front camera", status: "connected", detail: "Plate confidence 94%" },
+  { name: "Supabase sync", status: "online", detail: "Last sync 18 seconds ago" },
+  { name: "Remote clerk access", status: "ready", detail: "Web approvals enabled" },
+];
+
+export const movementTypes = [
+  { name: "Raw cotton receipt", rule: "AMCOS, collection point, distance, fuel rate, first/second weigh" },
+  { name: "Finished goods dispatch", rule: "Customer order, destination, product list, dispatch ticket" },
+  { name: "Production input receipt", rule: "Supplier, material, purchase note, store confirmation" },
+  { name: "Lint bale transfer", rule: "Internal location, bale count, transfer approval" },
+  { name: "Return or empty movement", rule: "Reason, previous ticket link, supervisor review" },
+];
+
+export const rawCottonFuelRows = [
+  {
+    amcosName: "Mwenge AMCOS",
+    collectionPoint: "Maswa",
+    plate: "AB12 CDE",
+    distanceKm: 74,
+    fuelRatePerKm: 1800,
+    fuelCurrency: "TZS",
+    payable: 133200,
+  },
+  {
+    amcosName: "Mwamala AMCOS",
+    collectionPoint: "Kishapu",
+    plate: "T442 DKL",
+    distanceKm: 52,
+    fuelRatePerKm: 1800,
+    fuelCurrency: "TZS",
+    payable: 93600,
+  },
+];
+
+export const reportCards = [
+  { title: "AMCOS fuel payable", value: "226,800 TZS", detail: "2 raw cotton movements" },
+  { title: "Net cotton received", value: "28,540 kg", detail: "Awaiting quality review" },
+  { title: "Finished goods out", value: "14,620 kg", detail: "1 second weigh pending" },
+  { title: "Manual overrides", value: "0", detail: "No supervisor exceptions" },
+];
+
+export const auditItems = [
+  "Camera matched GX22 FBD to WB-1048",
+  "Remote clerk approved second-weigh readiness",
+  "AMCOS fuel rate applied for Mwenge AMCOS",
+  "XK3190-DS1 stable reading locked at 14,620 kg",
+];
