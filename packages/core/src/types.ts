@@ -15,6 +15,12 @@ export interface OrderNote {
   movementType?: string;
   materialCategory?: string;
   counterpartyName?: string;
+  amcosName?: string;
+  collectionPoint?: string;
+  distanceKm?: number;
+  fuelRatePerKm?: number;
+  fuelCurrency?: string;
+  fuelPayableAmount?: number;
   customerName: string;
   vehiclePlate: string;
   driverName?: string;
