@@ -1,17 +1,7 @@
 create extension if not exists "pgcrypto";
 
-create type public.weigh_session_status as enum (
-  'awaiting_first_weight',
-  'awaiting_second_weight',
-  'completed',
-  'cancelled'
-);
-
-create type public.weigh_event_kind as enum (
-  'first_weight',
-  'second_weight',
-  'manual_adjustment'
-);
+create type public.weigh_session_status as enum ('awaiting_first_weight','awaiting_second_weight','completed','cancelled');
+create type public.weigh_event_kind as enum ('first_weight','second_weight','manual_adjustment');
 
 create table public.vehicles (
   id uuid primary key default gen_random_uuid(),
@@ -34,13 +24,7 @@ create table public.order_notes (
   distance_km numeric,
   fuel_rate_per_km numeric,
   fuel_currency text not null default 'TZS',
-  fuel_payable_amount numeric generated always as (
-    case
-      when distance_km is not null and fuel_rate_per_km is not null
-      then distance_km * fuel_rate_per_km
-      else null
-    end
-  ) stored,
+  fuel_payable_amount numeric generated always as (case when distance_km is not null and fuel_rate_per_km is not null then distance_km * fuel_rate_per_km else null end) stored,
   customer_name text not null,
   vehicle_id uuid references public.vehicles(id),
   vehicle_plate text not null,
@@ -63,13 +47,7 @@ create table public.weigh_sessions (
   direction text not null default 'outbound',
   first_weight_kg numeric,
   second_weight_kg numeric,
-  net_weight_kg numeric generated always as (
-    case
-      when first_weight_kg is not null and second_weight_kg is not null
-      then abs(second_weight_kg - first_weight_kg)
-      else null
-    end
-  ) stored,
+  net_weight_kg numeric generated always as (case when first_weight_kg is not null and second_weight_kg is not null then abs(second_weight_kg - first_weight_kg) else null end) stored,
   opened_by uuid,
   closed_by uuid,
   opened_at timestamptz not null default now(),
@@ -114,9 +92,6 @@ create table public.integration_events (
 
 create index order_notes_vehicle_plate_idx on public.order_notes(vehicle_plate);
 create index order_notes_scheduled_at_idx on public.order_notes(scheduled_at);
-create index order_notes_movement_type_idx on public.order_notes(movement_type);
-create index order_notes_material_category_idx on public.order_notes(material_category);
-create index order_notes_amcos_name_idx on public.order_notes(amcos_name);
 create index weigh_sessions_status_idx on public.weigh_sessions(status);
 create index camera_reads_plate_idx on public.camera_reads(plate);
 
@@ -127,19 +102,9 @@ alter table public.weigh_events enable row level security;
 alter table public.camera_reads enable row level security;
 alter table public.integration_events enable row level security;
 
-create policy "Authenticated users can read vehicles" on public.vehicles for select to authenticated using (true);
 create policy "Authenticated users can manage vehicles" on public.vehicles for all to authenticated using (true) with check (true);
-
-create policy "Authenticated users can read order notes" on public.order_notes for select to authenticated using (true);
 create policy "Authenticated users can manage order notes" on public.order_notes for all to authenticated using (true) with check (true);
-
-create policy "Authenticated users can read weigh sessions" on public.weigh_sessions for select to authenticated using (true);
 create policy "Authenticated users can manage weigh sessions" on public.weigh_sessions for all to authenticated using (true) with check (true);
-
-create policy "Authenticated users can read weigh events" on public.weigh_events for select to authenticated using (true);
 create policy "Authenticated users can manage weigh events" on public.weigh_events for all to authenticated using (true) with check (true);
-
-create policy "Authenticated users can read camera reads" on public.camera_reads for select to authenticated using (true);
 create policy "Authenticated users can manage camera reads" on public.camera_reads for all to authenticated using (true) with check (true);
-
-create policy "Authenticated users can read integration events" on public.integration_events for select to authenticated using (true);
+create policy "Authenticated users can manage integration events" on public.integration_events for all to authenticated using (true) with check (true);
