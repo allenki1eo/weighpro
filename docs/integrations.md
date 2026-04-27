@@ -1,8 +1,8 @@
 # Integrations
 
-## Order request notes
+## Movement and order request notes
 
-Use `POST /api/order-notes` to push completed request notes from the external order platform.
+Use `POST /api/order-notes` to push completed request notes from external business systems. This can include customer orders, procurement receipts, cotton movements, production transfers, finished goods dispatches, returns, or manual weighbridge bookings.
 
 Required header:
 
@@ -15,10 +15,14 @@ Example payload:
 ```json
 {
   "externalNoteId": "REQ-2026-00017",
-  "customerName": "Blue Coast Drinks",
+  "businessUnit": "East African Spirits",
+  "movementType": "finished_goods_dispatch",
+  "materialCategory": "finished_goods",
+  "counterpartyName": "Blue Coast Distributor",
+  "customerName": "Blue Coast Distributor",
   "vehiclePlate": "AB12CDE",
   "driverName": "A. Mensah",
-  "product": "Bottled drinks",
+  "product": "Assorted beverages",
   "destination": "Main depot",
   "quantity": 1200,
   "scheduledAt": "2026-04-27T08:30:00Z",
@@ -26,7 +30,7 @@ Example payload:
 }
 ```
 
-The endpoint upserts the vehicle and order note so duplicate pushes are safe.
+The endpoint upserts the vehicle and movement note so duplicate pushes are safe.
 
 ## XK3190-DS1
 
