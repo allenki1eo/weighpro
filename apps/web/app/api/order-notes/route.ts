@@ -1,6 +1,6 @@
-import { normalizePlate } from "@weighpro/core";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { normalizePlate } from "@/lib/plate";
 import { createServiceSupabaseClient } from "../../../lib/supabase";
 
 const orderNoteSchema = z.object({
