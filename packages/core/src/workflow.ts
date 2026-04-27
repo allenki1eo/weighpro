@@ -1,4 +1,4 @@
-import type { WeighSessionStatus } from "./types";
+import type { WeighSessionStatus } from "./types.js";
 
 export function calculateNetWeightKg(firstWeightKg?: number, secondWeightKg?: number) {
   if (firstWeightKg == null || secondWeightKg == null) {
