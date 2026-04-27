@@ -1,4 +1,4 @@
-import type { WeightReading } from "@weighpro/core";
+import type { WeightReading } from "./weight";
 
 declare global {
   interface Window {
