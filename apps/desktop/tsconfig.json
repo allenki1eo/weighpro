@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "jsx": "react-jsx",
+    "rootDir": "src",
+    "outDir": "dist",
+    "noEmit": false,
+    "types": ["node"],
+    "paths": {
+      "@weighpro/core": ["../../packages/core/dist/index.d.ts"]
+    }
+  },
+  "include": ["src"]
+}
