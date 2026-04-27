@@ -11,6 +11,10 @@ export type WeighSessionStatus =
 export interface OrderNote {
   id: string;
   externalNoteId: string;
+  businessUnit?: string;
+  movementType?: string;
+  materialCategory?: string;
+  counterpartyName?: string;
   customerName: string;
   vehiclePlate: string;
   driverName?: string;
