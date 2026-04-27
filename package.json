@@ -1,0 +1,24 @@
+{
+  "name": "weighpro",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Modern weighbridge platform with web, Electron station bridge, Supabase, camera, and order-note integrations.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace @weighpro/core run build && npm --workspace apps/web run dev",
+    "dev:desktop": "npm --workspace @weighpro/core run build && npm --workspace apps/desktop run dev",
+    "build": "npm run build --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "lint": "npm run lint --workspaces"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
