@@ -1,4 +1,4 @@
-import type { WeightReading, WeightUnit } from "./types";
+import type { WeightReading, WeightUnit } from "./types.js";
 
 export interface ParseWeightOptions {
   defaultUnit?: WeightUnit;
