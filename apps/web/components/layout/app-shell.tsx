@@ -2,7 +2,21 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ClipboardCheck, Fuel, ReceiptText, Scale, Settings } from "lucide-react";
+import {
+  Boxes,
+  ClipboardCheck,
+  FileCheck2,
+  Fuel,
+  History,
+  Link2,
+  Package,
+  ReceiptText,
+  Scale,
+  Settings,
+  ShieldCheck,
+  Truck,
+  Users,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 
@@ -10,8 +24,16 @@ const nav = [
   { label: "Station", href: "/", icon: Scale },
   { label: "Movements", href: "/movements", icon: ClipboardCheck },
   { label: "Raw cotton", href: "/raw-cotton", icon: Fuel },
+  { label: "Tickets", href: "/tickets", icon: FileCheck2 },
+  { label: "Vehicles & Drivers", href: "/vehicles", icon: Truck },
+  { label: "Customers / Suppliers / AMCOS", href: "/counterparties", icon: Users },
+  { label: "Materials & Products", href: "/materials", icon: Boxes },
+  { label: "Orders / Integrations", href: "/integrations", icon: Link2 },
+  { label: "Approvals", href: "/approvals", icon: ShieldCheck },
+  { label: "Audit Logs", href: "/audit-logs", icon: History },
   { label: "Reports", href: "/reports", icon: ReceiptText },
-  { label: "Admin", href: "/admin", icon: Settings },
+  { label: "Admin", href: "/admin", icon: Package },
+  { label: "Settings", href: "/settings", icon: Settings },
 ];
 
 export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -30,13 +52,13 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
               <div className="text-xs text-muted-foreground">Full weighbridge system</div>
             </div>
           </Link>
-          <nav className="grid gap-1 max-lg:grid-cols-5 max-sm:grid-cols-2" aria-label="Main navigation">
+          <nav className="grid gap-1 max-lg:flex max-lg:overflow-x-auto max-lg:pb-2" aria-label="Main navigation">
             {nav.map((item) => {
               const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
               return (
                 <Link
                   className={cn(
-                    "flex min-h-10 items-center gap-2 rounded-md px-3 text-sm transition-colors",
+                    "flex min-h-10 items-center gap-2 rounded-md px-3 text-sm transition-colors max-lg:shrink-0",
                     active ? "bg-secondary font-medium text-foreground" : "text-muted-foreground hover:bg-secondary/60",
                   )}
                   href={item.href}
