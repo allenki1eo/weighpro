@@ -2,8 +2,6 @@ import {
   Activity,
   ClipboardCheck,
   Fuel,
-  Gauge,
-  MonitorSmartphone,
   PackageCheck,
   ReceiptText,
   RefreshCcw,
@@ -13,6 +11,7 @@ import {
   ShieldCheck,
   Wifi,
 } from "lucide-react";
+import { StationBridgePanel } from "@/components/station/station-bridge-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -235,41 +234,7 @@ export default function Home() {
             </div>
 
             <aside className="grid gap-4 self-start">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <CardTitle>Station control</CardTitle>
-                      <CardDescription>XK3190-DS1, cameras, and remote clerk status.</CardDescription>
-                    </div>
-                    <MonitorSmartphone className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                </CardHeader>
-                <CardContent className="grid gap-4">
-                  <div className="grid min-h-36 place-items-center rounded-lg border bg-zinc-950 text-center text-lime-200">
-                    <div>
-                      <Gauge className="mx-auto mb-2 h-6 w-6" />
-                      <div className="font-mono text-5xl font-semibold leading-none">14,620</div>
-                      <div className="mt-2 text-xs uppercase tracking-normal">kg stable</div>
-                    </div>
-                  </div>
-                  <div className="grid gap-2">
-                    {stationDevices.map((device) => (
-                      <div className="flex items-center justify-between gap-3 rounded-md border p-3" key={device.name}>
-                        <div>
-                          <div className="text-sm font-medium">{device.name}</div>
-                          <div className="text-xs text-muted-foreground">{device.detail}</div>
-                        </div>
-                        <Badge variant="secondary">{device.status}</Badge>
-                      </div>
-                    ))}
-                  </div>
-                  <Button className="w-full">
-                    <Scale />
-                    Confirm stable weight
-                  </Button>
-                </CardContent>
-              </Card>
+              <StationBridgePanel devices={stationDevices} />
 
               <Card>
                 <CardHeader>
