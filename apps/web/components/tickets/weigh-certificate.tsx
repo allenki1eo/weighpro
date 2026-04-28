@@ -14,6 +14,7 @@ type Ticket = {
   netWeightKg: number | null;
   status: string;
   driver: string;
+  transportCompany?: string;
   customer: string;
   product: string;
   completedAt: string | null;
@@ -33,10 +34,31 @@ export function WeighCertificate({
     }
   }, [autoPrint]);
 
-  const issuedAt = ticket.completedAt ?? new Date().toLocaleString();
+  const issuedAt = ticket.completedAt
+    ? new Date(ticket.completedAt).toLocaleString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : new Date().toLocaleString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+  const entranceKg = ticket.firstWeightKg;
+  const exitKg = ticket.secondWeightKg;
+  const netKg =
+    ticket.netWeightKg ??
+    (entranceKg != null && exitKg != null
+      ? Math.abs(entranceKg - exitKg)
+      : null);
 
   return (
-    /* Force light theme for certificate — must print on white */
     <div className="min-h-screen bg-white text-zinc-900">
       {/* Toolbar — hidden when printing */}
       <div className="print:hidden flex items-center gap-3 border-b bg-white px-5 py-3 shadow-sm">
@@ -47,131 +69,123 @@ export function WeighCertificate({
           <ArrowLeft className="h-4 w-4" />
           Back to ticket
         </Link>
-        <button
-          onClick={() => window.print()}
-          className={buttonVariants({ size: "sm" })}
-        >
+        <button onClick={() => window.print()} className={buttonVariants({ size: "sm" })}>
           <Printer className="h-4 w-4" />
           Print / Save as PDF
         </button>
         <span className="text-sm text-zinc-500">
-          Use your browser&apos;s &quot;Save as PDF&quot; option when printing for a digital copy.
+          Use &quot;Save as PDF&quot; in the print dialog for a digital copy.
         </span>
       </div>
 
-      {/* Certificate body — A4-ish width, centred */}
-      <div className="mx-auto max-w-[700px] px-8 py-10 print:max-w-none print:px-12 print:py-8">
-        {/* ── Header ───────────────────────────────────────────── */}
-        <div className="mb-6 border-b-4 border-zinc-900 pb-4 text-center">
-          <div className="mb-1 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
-            Weighbridge Operations System
+      {/* Certificate body */}
+      <div className="mx-auto max-w-[720px] px-8 py-10 print:max-w-none print:px-12 print:py-8">
+        {/* ── Header ── */}
+        <div className="mb-6 border-b-4 border-zinc-900 pb-5 text-center">
+          <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.22em] text-zinc-400">
+            Official Weighbridge Document
           </div>
-          <h1 className="text-3xl font-extrabold uppercase tracking-wider">WeighPro</h1>
-          <div className="mt-2 inline-block rounded border border-zinc-300 bg-zinc-50 px-6 py-1 text-base font-bold uppercase tracking-widest">
+          <h1 className="text-4xl font-extrabold uppercase tracking-wider">WeighPro</h1>
+          <div className="mt-1 text-xs text-zinc-500">Weighbridge Operations System</div>
+          <div className="mt-3 inline-block rounded border border-zinc-300 bg-zinc-50 px-8 py-1.5 text-sm font-bold uppercase tracking-widest">
             Weighbridge Certificate
           </div>
         </div>
 
-        {/* ── Ref & date ───────────────────────────────────────── */}
-        <div className="mb-5 flex flex-wrap justify-between gap-3 rounded-md border border-zinc-200 bg-zinc-50 px-5 py-3 text-sm">
+        {/* ── Ref & meta ── */}
+        <div className="mb-5 grid grid-cols-3 gap-3 rounded-md border border-zinc-200 bg-zinc-50 px-5 py-3.5 text-sm">
           <div>
-            <span className="font-semibold text-zinc-500">Certificate No.&nbsp;</span>
-            <span className="font-mono font-bold">{ticket.id}</span>
+            <div className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Certificate No.</div>
+            <div className="mt-0.5 font-mono font-bold">{ticket.id}</div>
           </div>
           <div>
-            <span className="font-semibold text-zinc-500">Issued&nbsp;</span>
-            <span className="font-medium">{issuedAt}</span>
+            <div className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Issued</div>
+            <div className="mt-0.5 font-medium">{issuedAt}</div>
           </div>
           <div>
-            <span className="font-semibold text-zinc-500">Status&nbsp;</span>
-            <span className="font-medium uppercase">{ticket.status.replaceAll("_", " ")}</span>
+            <div className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Status</div>
+            <div className="mt-0.5 font-medium uppercase">{ticket.status.replaceAll("_", " ")}</div>
           </div>
         </div>
 
-        {/* ── Section: Vehicle ─────────────────────────────────── */}
+        {/* ── Vehicle details ── */}
         <Section title="Vehicle Details">
           <Row label="Vehicle Registration" value={ticket.plate} mono />
-          <Row label="Driver Name" value={ticket.driver} />
-          <Row label="Transport Company" value="—" />
+          <Row label="Driver Name" value={ticket.driver || "—"} />
+          <Row label="Transport Company" value={ticket.transportCompany || "—"} />
         </Section>
 
-        {/* ── Section: Movement ────────────────────────────────── */}
+        {/* ── Movement details ── */}
         <Section title="Movement Details">
-          <Row label="Movement Type" value={ticket.movement} />
-          <Row label="Customer / Supplier / AMCOS" value={ticket.customer} />
-          <Row label="Product / Material" value={ticket.product} />
+          <Row label="Movement Type" value={ticket.movement || "—"} />
+          <Row label="Customer / Supplier / AMCOS" value={ticket.customer || "—"} />
+          <Row label="Product / Material" value={ticket.product || "—"} />
         </Section>
 
-        {/* ── Section: Weight ──────────────────────────────────── */}
-        <section className="mb-5">
+        {/* ── Weight measurements ── */}
+        <section className="mb-6">
           <SectionHeading title="Weight Measurements" />
           <table className="w-full border-collapse text-sm">
             <tbody>
-              <tr className="border border-zinc-300">
-                <td className="border-r border-zinc-300 bg-zinc-50 px-4 py-3 font-semibold uppercase tracking-wide text-zinc-500 w-1/2">
-                  First Weighment
+              <WeighRow
+                label="Entrance Weighment"
+                sub="First weighment — laden / gross"
+                value={entranceKg}
+              />
+              <WeighRow
+                label="Exit Weighment"
+                sub="Second weighment — empty / tare"
+                value={exitKg}
+              />
+              {/* Net weight row */}
+              <tr className="border border-t-0 bg-zinc-900 text-white">
+                <td className="px-4 py-4 font-bold">
+                  <div className="text-base uppercase tracking-widest">Net Weight</div>
                   <div className="text-xs font-normal normal-case text-zinc-400">
-                    Laden / Gross weight
+                    Entrance − Exit
                   </div>
                 </td>
-                <td className="px-4 py-3 text-right text-xl font-bold tabular-nums">
-                  {ticket.firstWeightKg != null
-                    ? ticket.firstWeightKg.toLocaleString() + " KG"
-                    : "PENDING"}
-                </td>
-              </tr>
-              <tr className="border border-t-0 border-zinc-300">
-                <td className="border-r border-zinc-300 bg-zinc-50 px-4 py-3 font-semibold uppercase tracking-wide text-zinc-500">
-                  Second Weighment
-                  <div className="text-xs font-normal normal-case text-zinc-400">
-                    Empty / Tare weight
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-right text-xl font-bold tabular-nums">
-                  {ticket.secondWeightKg != null
-                    ? ticket.secondWeightKg.toLocaleString() + " KG"
-                    : "PENDING"}
-                </td>
-              </tr>
-              <tr className="border border-t-0 border-2 border-zinc-900 bg-zinc-900 text-white">
-                <td className="px-4 py-4 font-bold uppercase tracking-widest text-lg">
-                  Net Weight
-                  <div className="text-xs font-normal normal-case text-zinc-300">
-                    First weighment − Second weighment
-                  </div>
-                </td>
-                <td className="px-4 py-4 text-right text-3xl font-extrabold tabular-nums">
-                  {ticket.netWeightKg != null
-                    ? ticket.netWeightKg.toLocaleString() + " KG"
-                    : "PENDING"}
+                <td className="px-4 py-4 text-right">
+                  <span className="text-3xl font-extrabold tabular-nums">
+                    {netKg != null ? netKg.toLocaleString() : "PENDING"}
+                  </span>
+                  {netKg != null && (
+                    <span className="ml-2 text-lg font-bold text-zinc-400">KG</span>
+                  )}
                 </td>
               </tr>
             </tbody>
           </table>
 
-          <div className="mt-2 flex gap-4 text-xs text-zinc-500">
-            <span>Scale Indicator: <strong>XK3190-DS1</strong></span>
-            <span>Unit: <strong>Kilograms (kg)</strong></span>
-            <span>Weighbridge: <strong>WeighPro Station 1</strong></span>
+          <div className="mt-2 flex flex-wrap gap-4 text-xs text-zinc-500">
+            <span>
+              Scale indicator: <strong>XK3190-DS1</strong>
+            </span>
+            <span>
+              Unit: <strong>Kilograms (kg)</strong>
+            </span>
+            <span>
+              Station: <strong>WeighPro Station 1</strong>
+            </span>
           </div>
         </section>
 
-        {/* ── Signatures ───────────────────────────────────────── */}
-        <section className="mb-6 grid grid-cols-2 gap-8">
+        {/* ── Signatures ── */}
+        <section className="mb-6 grid grid-cols-2 gap-10">
           <SignatureLine label="Weighbridge Operator" />
           <SignatureLine label="Supervisor / Authorised Signatory" />
         </section>
 
-        {/* ── Footer ───────────────────────────────────────────── */}
-        <div className="border-t border-zinc-200 pt-4 text-xs text-zinc-400">
+        {/* ── Footer ── */}
+        <div className="border-t border-zinc-200 pt-4 text-[10px] leading-relaxed text-zinc-400">
           <p>
-            This certificate is issued by WeighPro Weighbridge Operations System and constitutes an
-            official record of the weighing transaction identified above. The net weight stated
-            herein is based on calibrated scale readings captured by the XK3190-DS1 indicator.
-            Any discrepancy should be reported within 24 hours of issue.
+            This certificate is an official record of the weighing transaction above, issued by the
+            WeighPro Weighbridge Operations System. The net weight is based on calibrated scale readings
+            captured by the XK3190-DS1 indicator. Any discrepancy must be reported within 24 hours of
+            issue.
           </p>
-          <p className="mt-2">
-            <strong>WeighPro System</strong> — Weighbridge Certificate {ticket.id} — Generated{" "}
+          <p className="mt-2 font-medium text-zinc-500">
+            WeighPro System · Certificate {ticket.id} · Generated{" "}
             {new Date().toLocaleDateString("en-GB", {
               day: "2-digit",
               month: "long",
@@ -184,12 +198,12 @@ export function WeighCertificate({
   );
 }
 
-/* ── Helpers ─────────────────────────────────────────────────────── */
+/* ── Helpers ── */
 
 function SectionHeading({ title }: { title: string }) {
   return (
     <div className="mb-2 flex items-center gap-3">
-      <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-zinc-500">{title}</h2>
+      <h2 className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-500">{title}</h2>
       <div className="flex-1 border-t border-zinc-200" />
     </div>
   );
@@ -199,7 +213,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return (
     <section className="mb-5">
       <SectionHeading title={title} />
-      <div className="rounded-md border border-zinc-200 divide-y divide-zinc-100">{children}</div>
+      <div className="divide-y divide-zinc-100 rounded-md border border-zinc-200">{children}</div>
     </section>
   );
 }
@@ -223,10 +237,35 @@ function Row({
   );
 }
 
+function WeighRow({
+  label,
+  sub,
+  value,
+}: {
+  label: string;
+  sub: string;
+  value: number | null;
+}) {
+  return (
+    <tr className="border border-b-0 border-zinc-300 last:border-b">
+      <td className="border-r border-zinc-200 bg-zinc-50 px-4 py-3 w-1/2">
+        <div className="font-semibold uppercase tracking-wide text-zinc-500 text-xs">{label}</div>
+        <div className="text-[11px] font-normal text-zinc-400">{sub}</div>
+      </td>
+      <td className="px-4 py-3 text-right">
+        <span className="text-xl font-bold tabular-nums">
+          {value != null ? value.toLocaleString() : "PENDING"}
+        </span>
+        {value != null && <span className="ml-1.5 text-sm font-semibold text-zinc-400">KG</span>}
+      </td>
+    </tr>
+  );
+}
+
 function SignatureLine({ label }: { label: string }) {
   return (
     <div>
-      <div className="mt-8 border-b border-zinc-400" />
+      <div className="mt-10 border-b border-zinc-400" />
       <div className="mt-1.5 text-xs text-zinc-500">{label}</div>
       <div className="mt-0.5 text-xs text-zinc-400">Name: ____________________</div>
       <div className="mt-0.5 text-xs text-zinc-400">Date: ____________________</div>

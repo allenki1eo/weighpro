@@ -8,8 +8,8 @@ import {
   Scale,
   Search,
   Timer,
-  Truck,
   TrendingUp,
+  Truck,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { WeighWorkbench } from "@/components/station/weigh-workbench";
@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { auditItems, sessions, tickets } from "@/lib/sample-data";
+import { getDashboardStats, getRecentTickets, getRecentAuditLogs } from "@/lib/server-data";
 
 function statusVariant(status: string) {
   if (status === "completed") return "success";
@@ -31,9 +31,25 @@ function statusLabel(status: string) {
   return status.replaceAll("_", " ");
 }
 
-const recentTickets = tickets.slice(0, 5);
+export default async function Home() {
+  const [stats, recentTickets, auditItems] = await Promise.all([
+    getDashboardStats(),
+    getRecentTickets(5),
+    getRecentAuditLogs(6),
+  ]);
 
-export default function Home() {
+  const netWeightDisplay =
+    stats.netWeightTodayKg >= 1000
+      ? (stats.netWeightTodayKg / 1000).toFixed(1) + " t"
+      : stats.netWeightTodayKg.toLocaleString() + " kg";
+
+  const amcosDisplay =
+    stats.amcosFuelPayable >= 1_000_000
+      ? (stats.amcosFuelPayable / 1_000_000).toFixed(1) + "M TZS"
+      : stats.amcosFuelPayable >= 1_000
+      ? (stats.amcosFuelPayable / 1_000).toFixed(0) + "K TZS"
+      : stats.amcosFuelPayable.toFixed(0) + " TZS";
+
   return (
     <AppShell>
       {/* Page header */}
@@ -51,7 +67,7 @@ export default function Home() {
           </Link>
           <Link className={buttonVariants({ size: "sm" })} href="/tickets">
             <PackageCheck className="h-4 w-4" />
-            New weigh
+            All tickets
           </Link>
         </div>
       </div>
@@ -64,10 +80,14 @@ export default function Home() {
               <Scale className="h-3.5 w-3.5" />
               Weighings today
             </CardDescription>
-            <CardTitle className="text-3xl font-bold tabular-nums">12</CardTitle>
+            <CardTitle className="text-3xl font-bold tabular-nums">
+              {stats.weighingsToday}
+            </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <p className="text-xs text-muted-foreground">8 receipts · 3 dispatches · 1 manual</p>
+            <p className="text-xs text-muted-foreground">
+              {stats.receiptsToday} receipts · {stats.dispatchesToday} dispatches
+            </p>
           </CardContent>
         </Card>
 
@@ -77,10 +97,12 @@ export default function Home() {
               <TrendingUp className="h-3.5 w-3.5" />
               Net weight today
             </CardDescription>
-            <CardTitle className="text-3xl font-bold tabular-nums">287 t</CardTitle>
+            <CardTitle className="text-3xl font-bold tabular-nums">
+              {netWeightDisplay}
+            </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <p className="text-xs text-muted-foreground">68% seed cotton</p>
+            <p className="text-xs text-muted-foreground">Completed transactions only</p>
           </CardContent>
         </Card>
 
@@ -90,11 +112,13 @@ export default function Home() {
               <Timer className="h-3.5 w-3.5" />
               Active sessions
             </CardDescription>
-            <CardTitle className="text-3xl font-bold tabular-nums">{sessions.length}</CardTitle>
+            <CardTitle className="text-3xl font-bold tabular-nums">
+              {stats.activeSessions}
+            </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
             <p className="text-xs text-muted-foreground">
-              {sessions.filter((s) => s.status === "awaiting_second_weight").length} awaiting second weigh
+              {stats.awaitingSecondWeigh} awaiting second weigh
             </p>
           </CardContent>
         </Card>
@@ -105,10 +129,10 @@ export default function Home() {
               <ClipboardList className="h-3.5 w-3.5" />
               AMCOS fuel payable
             </CardDescription>
-            <CardTitle className="text-2xl font-bold tabular-nums">1.2M TZS</CardTitle>
+            <CardTitle className="text-2xl font-bold tabular-nums">{amcosDisplay}</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <p className="text-xs text-muted-foreground">Across 4 collection points</p>
+            <p className="text-xs text-muted-foreground">Raw cotton receipt journeys</p>
           </CardContent>
         </Card>
       </div>
@@ -139,28 +163,44 @@ export default function Home() {
                     <TableHead>Ticket</TableHead>
                     <TableHead>Plate</TableHead>
                     <TableHead className="hidden sm:table-cell">Product</TableHead>
-                    <TableHead className="hidden md:table-cell">Net weight</TableHead>
+                    <TableHead className="hidden md:table-cell text-right">Net weight</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {recentTickets.map((ticket) => (
-                    <TableRow key={ticket.id}>
-                      <TableCell className="font-mono text-xs">{ticket.id}</TableCell>
-                      <TableCell className="font-medium">{ticket.plate}</TableCell>
-                      <TableCell className="hidden sm:table-cell text-muted-foreground">
-                        {ticket.product}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell tabular-nums">
-                        {ticket.netWeight}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={statusVariant(ticket.status) as any}>
-                          {statusLabel(ticket.status)}
-                        </Badge>
+                  {recentTickets.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
+                        No tickets yet today.
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    recentTickets.map((ticket) => (
+                      <TableRow
+                        key={ticket.id}
+                        className="cursor-pointer"
+                        onClick={() =>
+                          (window.location.href = `/tickets/${encodeURIComponent(ticket.id)}`)
+                        }
+                      >
+                        <TableCell className="font-mono text-xs">{ticket.id}</TableCell>
+                        <TableCell className="font-medium">{ticket.plate}</TableCell>
+                        <TableCell className="hidden sm:table-cell text-muted-foreground">
+                          {ticket.product ?? "—"}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-right tabular-nums">
+                          {ticket.netWeightKg != null
+                            ? ticket.netWeightKg.toLocaleString() + " kg"
+                            : "—"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={statusVariant(ticket.status) as any}>
+                            {statusLabel(ticket.status)}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -174,30 +214,41 @@ export default function Home() {
               <Activity className="h-4 w-4 text-primary" />
               Live activity
             </CardTitle>
-            <CardDescription>Real-time audit events</CardDescription>
+            <CardDescription>Recent audit events</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3 p-4 pt-0">
-            {auditItems.slice(0, 6).map((item) => (
-              <div key={item.id} className="flex gap-3">
-                <div className="mt-0.5 shrink-0">
-                  {item.action.startsWith("Ticket completed") ? (
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                  ) : item.action.startsWith("Session") ? (
-                    <Truck className="h-4 w-4 text-blue-500" />
-                  ) : (
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                  )}
+            {auditItems.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No activity yet.</p>
+            ) : (
+              auditItems.map((item) => (
+                <div key={item.id} className="flex gap-3">
+                  <div className="mt-0.5 shrink-0">
+                    {item.action.toLowerCase().includes("complet") ? (
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                    ) : item.action.toLowerCase().includes("session") ||
+                      item.action.toLowerCase().includes("open") ? (
+                      <Truck className="h-4 w-4 text-blue-500" />
+                    ) : (
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium leading-tight">
+                      <span className="font-mono text-xs text-muted-foreground">
+                        {item.entity}{" "}
+                      </span>
+                      {item.action}
+                    </p>
+                    {item.detail && (
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                        {item.detail}
+                      </p>
+                    )}
+                    <p className="mt-0.5 text-xs text-muted-foreground">{item.timestamp}</p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium leading-tight">
-                    <span className="font-mono text-xs text-muted-foreground">{item.entity} </span>
-                    {item.action}
-                  </p>
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.detail}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{item.timestamp}</p>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </CardContent>
         </Card>
       </div>
