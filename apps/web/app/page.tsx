@@ -176,14 +176,15 @@ export default async function Home() {
                     </TableRow>
                   ) : (
                     recentTickets.map((ticket) => (
-                      <TableRow
-                        key={ticket.id}
-                        className="cursor-pointer"
-                        onClick={() =>
-                          (window.location.href = `/tickets/${encodeURIComponent(ticket.id)}`)
-                        }
-                      >
-                        <TableCell className="font-mono text-xs">{ticket.id}</TableCell>
+                      <TableRow key={ticket.id} className="group">
+                        <TableCell className="font-mono text-xs">
+                          <Link
+                            href={`/tickets/${encodeURIComponent(ticket.id)}`}
+                            className="group-hover:underline"
+                          >
+                            {ticket.id}
+                          </Link>
+                        </TableCell>
                         <TableCell className="font-medium">{ticket.plate}</TableCell>
                         <TableCell className="hidden sm:table-cell text-muted-foreground">
                           {ticket.product ?? "—"}
