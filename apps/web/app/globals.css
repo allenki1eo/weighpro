@@ -117,3 +117,30 @@ body {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
+
+/* ── Print styles (certificate pages) ─────────────────────────── */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm 15mm;
+  }
+
+  /* Ensure white background and black text */
+  html,
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Preserve backgrounds for the dark weight row */
+  * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* No page break inside key sections */
+  section,
+  table {
+    break-inside: avoid;
+  }
+}

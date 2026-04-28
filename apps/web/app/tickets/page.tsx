@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Download, Printer, Search } from "lucide-react";
+import Link from "next/link";
+import { Download, ExternalLink, Printer, Search } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -119,8 +120,19 @@ export default function TicketsPage() {
                   </TableRow>
                 ) : (
                   filtered.map((ticket) => (
-                    <TableRow key={ticket.id}>
-                      <TableCell className="font-mono text-xs">{ticket.id}</TableCell>
+                    <TableRow
+                      key={ticket.id}
+                      className="cursor-pointer"
+                      onClick={() =>
+                        (window.location.href = `/tickets/${encodeURIComponent(ticket.id)}`)
+                      }
+                    >
+                      <TableCell>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono text-xs">{ticket.id}</span>
+                          <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/50" />
+                        </div>
+                      </TableCell>
                       <TableCell className="font-medium">{ticket.plate}</TableCell>
                       <TableCell className="text-muted-foreground">{ticket.driver}</TableCell>
                       <TableCell className="hidden md:table-cell text-muted-foreground">
@@ -136,9 +148,22 @@ export default function TicketsPage() {
                         {ticket.netWeight}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={statusVariant(ticket.status) as any}>
-                          {statusLabel(ticket.status)}
-                        </Badge>
+                        <div className="flex items-center justify-between gap-2">
+                          <Badge variant={statusVariant(ticket.status) as any}>
+                            {statusLabel(ticket.status)}
+                          </Badge>
+                          {ticket.status === "completed" && (
+                            <Link
+                              href={`/tickets/${encodeURIComponent(ticket.id)}/certificate?print=1`}
+                              target="_blank"
+                              onClick={(e) => e.stopPropagation()}
+                              className={buttonVariants({ variant: "ghost", size: "sm" }) + " h-7 px-2 text-xs"}
+                            >
+                              <Printer className="h-3 w-3" />
+                              <span className="hidden xl:inline">Certificate</span>
+                            </Link>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
