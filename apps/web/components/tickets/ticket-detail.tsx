@@ -31,6 +31,7 @@ type Ticket = {
   netWeight: string;
   status: string;
   driver: string;
+  transportCompany?: string;
   customer: string;
   product: string;
   completedAt: string | null;
@@ -45,6 +46,7 @@ function statusVariant(status: string) {
 
 interface EditableFields {
   driver: string;
+  transportCompany: string;
   customer: string;
   product: string;
   plate: string;
@@ -57,6 +59,7 @@ export function TicketDetail({ ticket }: { ticket: Ticket }) {
   const [saved, setSaved] = useState(false);
   const [fields, setFields] = useState<EditableFields>({
     driver: ticket.driver,
+    transportCompany: ticket.transportCompany ?? "—",
     customer: ticket.customer,
     product: ticket.product,
     plate: ticket.plate,
@@ -66,7 +69,7 @@ export function TicketDetail({ ticket }: { ticket: Ticket }) {
   const [draft, setDraft] = useState<EditableFields>(fields);
 
   function startEdit() {
-    setDraft(fields);
+    setDraft({ ...fields });
     setEditing(true);
     setSaved(false);
   }
@@ -196,6 +199,17 @@ export function TicketDetail({ ticket }: { ticket: Ticket }) {
                     />
                   ) : (
                     <p className="text-sm">{fields.driver}</p>
+                  )}
+                </div>
+                <div className="grid gap-1.5">
+                  <Label>Transport company</Label>
+                  {editing ? (
+                    <Input
+                      value={draft.transportCompany}
+                      onChange={(e) => setDraft({ ...draft, transportCompany: e.target.value })}
+                    />
+                  ) : (
+                    <p className="text-sm">{fields.transportCompany}</p>
                   )}
                 </div>
                 <div className="grid gap-1.5">

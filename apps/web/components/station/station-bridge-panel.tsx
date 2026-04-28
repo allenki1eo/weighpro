@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CheckCircle2,
   FlaskConical,
-  Gauge,
   MonitorSmartphone,
   RefreshCcw,
   Scale,
@@ -25,15 +24,49 @@ interface StationBridgePanelProps {
   devices: StationDevice[];
   activeSessionId?: string | null;
   captureKind?: "first_weight" | "second_weight" | "manual_adjustment";
-  onWeightCaptured?: (eventId: string) => void;
+  captureStep?: number;
+  onWeightCaptured?: (eventId: string, weightKg: number) => void;
 }
 
 const DEMO_BASE = 24_850;
+
+/* ── 7-segment style display helpers ─────────────────────────────── */
+function SegmentDisplay({ value, unit }: { value: number; unit: string }) {
+  const formatted = value.toLocaleString("en-US", { maximumFractionDigits: 0 });
+
+  return (
+    <div
+      className="select-none font-mono"
+      style={{ fontVariantNumeric: "tabular-nums" }}
+    >
+      {/* Indicator model label */}
+      <div className="mb-2 text-center text-[9px] font-bold uppercase tracking-[0.25em] text-lime-400/50">
+        XK3190-DS1 · WeighPro Station 1
+      </div>
+
+      {/* Main digit display */}
+      <div
+        className="text-center leading-none tracking-tight"
+        style={{ fontSize: "clamp(3rem, 8vw, 5.5rem)" }}
+      >
+        <span className="text-lime-300" style={{ textShadow: "0 0 20px rgba(163,230,53,0.4)" }}>
+          {formatted}
+        </span>
+      </div>
+
+      {/* Unit */}
+      <div className="mt-2 text-center text-base font-bold uppercase tracking-[0.3em] text-lime-400/80">
+        {unit}
+      </div>
+    </div>
+  );
+}
 
 export function StationBridgePanel({
   devices,
   activeSessionId,
   captureKind = "first_weight",
+  captureStep = 0,
   onWeightCaptured,
 }: StationBridgePanelProps) {
   const [reading, setReading] = useState<WeightReading | null>(null);
@@ -49,21 +82,21 @@ export function StationBridgePanel({
   const [demoStable, setDemoStable] = useState(false);
   const demoRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Demo weight varies by step to simulate real vehicle
+  const demoBase = captureKind === "second_weight" ? 5_120 : DEMO_BASE;
+
   useEffect(() => {
     if (isDesktopBridge || !demoActive) {
       if (demoRef.current) clearInterval(demoRef.current);
-      if (!demoActive) {
-        // Reset to null so the fallback message shows when demo off and no bridge
-        if (!isDesktopBridge) setReading(null);
-      }
+      if (!demoActive && !isDesktopBridge) setReading(null);
       return;
     }
 
     demoRef.current = setInterval(() => {
-      const fluctuation = demoStable ? 0 : Math.floor(Math.random() * 100) - 50;
-      const value = DEMO_BASE + fluctuation;
+      const fluctuation = demoStable ? 0 : Math.floor(Math.random() * 80) - 40;
+      const value = demoBase + fluctuation;
       setReading({
-        raw: `+${value}kg N`,
+        raw: `${demoStable ? "ST" : "US"} +${value}kg`,
         value,
         unit: "kg",
         stable: demoStable,
@@ -76,7 +109,7 @@ export function StationBridgePanel({
     return () => {
       if (demoRef.current) clearInterval(demoRef.current);
     };
-  }, [isDesktopBridge, demoActive, demoStable]);
+  }, [isDesktopBridge, demoActive, demoStable, demoBase]);
 
   /* ── Desktop bridge ─────────────────────────────────────────── */
   useEffect(() => {
@@ -118,10 +151,6 @@ export function StationBridgePanel({
   );
 
   const activeReading = reading ?? fallbackReading;
-  const displayWeight = useMemo(
-    () => activeReading.value.toLocaleString(),
-    [activeReading.value],
-  );
   const stable = activeReading.stable;
   const capturedAt = new Date(activeReading.capturedAt).toLocaleTimeString([], {
     hour: "2-digit",
@@ -133,9 +162,7 @@ export function StationBridgePanel({
   async function reconnectScale() {
     const station = window.weighproStation;
     if (!station) {
-      setBridgeError(
-        "Open the Electron station app to reconnect the XK3190-DS1 indicator.",
-      );
+      setBridgeError("Open the Electron station app to reconnect the XK3190-DS1 indicator.");
       return;
     }
     try {
@@ -144,9 +171,7 @@ export function StationBridgePanel({
       setReading(nextReading);
       setBridgeError(null);
     } catch (error) {
-      setBridgeError(
-        error instanceof Error ? error.message : "Scale reconnect failed.",
-      );
+      setBridgeError(error instanceof Error ? error.message : "Scale reconnect failed.");
     } finally {
       setIsReconnecting(false);
     }
@@ -155,14 +180,13 @@ export function StationBridgePanel({
   async function confirmStableWeight() {
     if (!stable) return;
 
+    const ts = new Date().toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
     setConfirmedReading(activeReading);
-    setConfirmedAt(
-      new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      }),
-    );
+    setConfirmedAt(ts);
 
     if (!activeSessionId) return;
 
@@ -181,27 +205,34 @@ export function StationBridgePanel({
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error ?? "Weight save failed.");
-      onWeightCaptured?.(result.event.id);
+      onWeightCaptured?.(result.event.id, activeReading.value);
     } catch (error) {
-      setBridgeError(
-        error instanceof Error ? error.message : "Weight save failed.",
-      );
+      setBridgeError(error instanceof Error ? error.message : "Weight save failed.");
     } finally {
       setIsSavingWeight(false);
     }
   }
 
-  const showDemoControls = !isDesktopBridge;
+  const stepLabel =
+    captureStep === 1
+      ? "Awaiting first weight (entrance / laden)"
+      : captureStep === 2
+      ? "Awaiting second weight (exit / tare)"
+      : captureStep === 3
+      ? "Ticket complete"
+      : "No active ticket — open a ticket first";
+
+  const noTicket = !activeSessionId;
 
   return (
-    <Card>
+    <Card className="flex flex-col">
       <CardHeader className="gap-3 md:flex-row md:items-start md:justify-between">
         <div>
-          <CardTitle>Station control</CardTitle>
+          <CardTitle>Scale indicator</CardTitle>
           <CardDescription>
             {isDesktopBridge
               ? "Live XK3190-DS1 readings via Electron desktop bridge."
-              : "Web mode — connect the Electron station app, or use demo mode below."}
+              : "Web mode — connect Electron station app or use demo mode."}
           </CardDescription>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -209,62 +240,61 @@ export function StationBridgePanel({
             {stable ? "stable" : "unstable"}
           </Badge>
           <Badge variant={isDesktopBridge ? "success" : demoActive ? "warning" : "outline"}>
-            {isDesktopBridge ? "desktop bridge" : demoActive ? "demo mode" : "web mode"}
+            {isDesktopBridge ? "live bridge" : demoActive ? "demo" : "disconnected"}
           </Badge>
         </div>
       </CardHeader>
 
-      <CardContent className="grid gap-4 xl:grid-cols-[1fr_340px]">
+      <CardContent className="flex flex-1 flex-col gap-4 xl:grid xl:grid-cols-[1fr_300px]">
         {/* ── Scale display ─────────────────────────────────────── */}
         <section
-          className={`grid min-h-[320px] place-items-center rounded-lg border p-6 text-center shadow-inner transition-colors ${
+          className={`grid min-h-[300px] place-items-center rounded-lg border p-6 text-center shadow-inner transition-colors ${
             stable
-              ? "border-emerald-500/30 bg-zinc-950 text-lime-200"
-              : "border-zinc-700 bg-zinc-950 text-lime-200/70"
+              ? "border-lime-500/40 bg-zinc-950"
+              : "border-zinc-700 bg-zinc-950"
           }`}
         >
-          <div>
-            <Gauge
-              className={`mx-auto mb-4 h-8 w-8 ${stable ? "text-lime-300" : "text-lime-200/50"}`}
+          <div className="w-full">
+            <SegmentDisplay
+              value={activeReading.value}
+              unit={activeReading.unit}
             />
-            <div
-              className={`font-mono text-7xl font-semibold leading-none tracking-tight transition-all max-sm:text-5xl ${
-                stable ? "text-lime-200" : "text-lime-200/60"
-              }`}
-            >
-              {displayWeight}
-            </div>
-            <div className="mt-3 text-sm font-semibold uppercase tracking-widest">
-              {activeReading.unit}
-            </div>
-            <div className="mt-5 flex flex-wrap justify-center gap-2 text-xs">
-              <Badge
-                variant="outline"
-                className={`border-lime-200/30 text-lime-100/70 ${
-                  stable ? "bg-lime-200/15" : "bg-zinc-800"
+
+            {/* Stability + time badges */}
+            <div className="mt-5 flex flex-wrap justify-center gap-2">
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                  stable
+                    ? "border-lime-500/40 bg-lime-500/15 text-lime-300"
+                    : "border-amber-500/40 bg-amber-500/10 text-amber-400"
                 }`}
               >
-                {stable ? "Stable reading" : "Waiting for stability"}
-              </Badge>
-              <Badge
-                variant="outline"
-                className="border-lime-200/20 bg-zinc-800 text-lime-100/50"
-              >
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${stable ? "bg-lime-400 animate-pulse" : "bg-amber-400"}`}
+                />
+                {stable ? "Reading stable" : "Stabilising…"}
+              </span>
+              <span className="inline-flex items-center rounded-full border border-lime-200/20 bg-zinc-800 px-3 py-1 text-xs text-lime-100/50">
                 {capturedAt}
-              </Badge>
+              </span>
             </div>
 
-            {/* Demo mode — stabilize button on display */}
+            {/* Raw frame */}
+            <div className="mt-3 font-mono text-[10px] text-lime-400/30 tracking-widest">
+              {activeReading.raw}
+            </div>
+
+            {/* Demo stabilise button */}
             {demoActive && !isDesktopBridge && (
               <button
-                className={`mt-5 rounded-md px-4 py-1.5 text-xs font-medium transition-colors ${
+                className={`mt-4 rounded-md px-5 py-2 text-xs font-semibold uppercase tracking-wider transition-colors ${
                   demoStable
-                    ? "bg-lime-200/20 text-lime-100 hover:bg-lime-200/30"
-                    : "bg-amber-500/30 text-amber-200 hover:bg-amber-500/40"
+                    ? "bg-lime-500/20 text-lime-200 hover:bg-lime-500/30"
+                    : "bg-amber-500/25 text-amber-200 hover:bg-amber-500/35"
                 }`}
                 onClick={() => setDemoStable((v) => !v)}
               >
-                {demoStable ? "Weight is stable — click to fluctuate" : "Click to stabilise demo weight"}
+                {demoStable ? "Weight stable — click to fluctuate" : "Click to stabilise demo weight"}
               </button>
             )}
           </div>
@@ -272,58 +302,40 @@ export function StationBridgePanel({
 
         {/* ── Sidebar controls ──────────────────────────────────── */}
         <aside className="grid content-start gap-3">
+          {/* Step context */}
+          <div
+            className={`rounded-md border px-4 py-3 text-sm ${
+              noTicket ? "border-dashed text-muted-foreground" : "border-primary/30 bg-primary/5"
+            }`}
+          >
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-0.5">
+              {noTicket ? "No active ticket" : captureKind === "first_weight" ? "Step 2 — First weight" : "Step 3 — Second weight"}
+            </p>
+            <p className="text-xs">{stepLabel}</p>
+          </div>
+
           {/* Bridge status */}
           <div className="flex items-center justify-between rounded-md border p-3 text-sm">
             <div>
               <div className="font-medium">Desktop bridge</div>
               <div className="text-xs text-muted-foreground">
-                {isDesktopBridge
-                  ? "Electron preload connected"
-                  : "Waiting for station app"}
+                {isDesktopBridge ? "Electron preload connected" : "Waiting for station app"}
               </div>
             </div>
             <MonitorSmartphone
-              className={`h-5 w-5 ${
-                isDesktopBridge ? "text-emerald-500" : "text-muted-foreground"
-              }`}
+              className={`h-5 w-5 ${isDesktopBridge ? "text-emerald-500" : "text-muted-foreground"}`}
             />
           </div>
 
-          {/* Raw frame + lock status */}
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <div className="rounded-md bg-muted p-3">
-              <div className="text-xs text-muted-foreground">Raw frame</div>
-              <div className="truncate font-mono text-xs">{activeReading.raw}</div>
-            </div>
-            <div className="rounded-md bg-muted p-3">
-              <div className="text-xs text-muted-foreground">Lock status</div>
-              <div className="text-sm font-medium">
-                {confirmedAt ? "Confirmed" : activeSessionId ? "Ready" : "No active ticket"}
-              </div>
-            </div>
-          </div>
-
-          {/* Capture kind */}
-          {activeSessionId && (
-            <div className="rounded-md border bg-primary/5 px-3 py-2.5 text-sm">
-              <span className="text-muted-foreground">Next capture: </span>
-              <span className="font-medium">
-                {captureKind === "first_weight" ? "First weight" : "Second weight"}
-              </span>
-            </div>
-          )}
-
           {/* Confirmed reading */}
           {confirmedReading && (
-            <div className="flex gap-3 rounded-md border border-primary/40 bg-primary/10 p-3 text-sm">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <div className="flex gap-3 rounded-md border border-emerald-500/40 bg-emerald-500/10 p-3 text-sm">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
               <div>
-                <div className="font-medium">
-                  Locked {confirmedReading.value.toLocaleString()} {confirmedReading.unit}
+                <div className="font-semibold">
+                  Locked: {confirmedReading.value.toLocaleString()} {confirmedReading.unit}
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  Confirmed at {confirmedAt}
-                </div>
+                <div className="text-xs text-muted-foreground">Confirmed at {confirmedAt}</div>
               </div>
             </div>
           )}
@@ -348,14 +360,16 @@ export function StationBridgePanel({
                     <div className="text-sm font-medium">{device.name}</div>
                     <div className="text-xs text-muted-foreground">{device.detail}</div>
                   </div>
-                  <Badge variant="secondary">{device.status}</Badge>
+                  <Badge variant={device.status === "online" ? "success" : "outline"}>
+                    {device.status}
+                  </Badge>
                 </div>
               ))}
             </div>
           )}
 
           {/* Action buttons */}
-          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+          <div className="grid gap-2">
             <Button
               variant="outline"
               onClick={reconnectScale}
@@ -367,38 +381,41 @@ export function StationBridgePanel({
 
             <Button
               onClick={confirmStableWeight}
-              disabled={!stable || isSavingWeight}
+              disabled={!stable || isSavingWeight || noTicket}
+              className="h-12 text-base font-bold"
             >
-              <Scale />
-              {isSavingWeight ? "Saving…" : "Confirm stable weight"}
+              <Scale className="h-5 w-5" />
+              {isSavingWeight
+                ? "Saving…"
+                : noTicket
+                ? "Open a ticket first"
+                : `Capture ${captureKind === "first_weight" ? "entrance" : "exit"} weight`}
             </Button>
           </div>
 
-          {/* Demo mode controls (web only) */}
-          {showDemoControls && (
+          {/* Demo mode controls */}
+          {!isDesktopBridge && (
             <div className="rounded-md border border-dashed p-3">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <FlaskConical className="h-4 w-4 text-amber-500" />
                 Demo mode
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                Simulates XK3190-DS1 readings so you can test the full workflow
-                without hardware. Connect the Electron station app to use a real scale.
+                Simulates XK3190-DS1 readings for testing the full workflow without
+                physical hardware.
               </p>
-              <div className="mt-3 flex gap-2">
-                <Button
-                  variant={demoActive ? "destructive" : "outline"}
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => {
-                    setDemoActive((v) => !v);
-                    setDemoStable(false);
-                    if (demoActive) setReading(null);
-                  }}
-                >
-                  {demoActive ? "Stop demo" : "Start demo weight"}
-                </Button>
-              </div>
+              <Button
+                variant={demoActive ? "destructive" : "outline"}
+                size="sm"
+                className="mt-3 w-full"
+                onClick={() => {
+                  setDemoActive((v) => !v);
+                  setDemoStable(false);
+                  if (demoActive) setReading(null);
+                }}
+              >
+                {demoActive ? "Stop demo" : "Start demo weight"}
+              </Button>
             </div>
           )}
         </aside>
