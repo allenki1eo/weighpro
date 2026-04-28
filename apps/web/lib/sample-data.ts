@@ -1,13 +1,352 @@
-export const sessions: any[] = [];
-export const pendingOrders: any[] = [];
-export const stationDevices: any[] = [];
-export const movementTypes: any[] = [];
-export const rawCottonFuelRows: any[] = [];
-export const reportCards: any[] = [];
-export const auditItems: any[] = [];
-export const tickets: any[] = [];
-export const vehicles: any[] = [];
-export const counterparties: any[] = [];
-export const materials: any[] = [];
-export const integrations: any[] = [];
-export const approvals: any[] = [];
+export const tickets = [
+  {
+    id: "WB-2025-00847",
+    plate: "T 234 ABC",
+    movement: "Raw cotton receipt",
+    firstWeightKg: 28450,
+    secondWeightKg: 5100,
+    netWeightKg: 23350,
+    netWeight: "23,350 kg",
+    status: "completed",
+    driver: "Mohamed Salim",
+    customer: "Kilosa AMCOS",
+    product: "Seed cotton",
+    completedAt: "2025-04-28 08:42",
+  },
+  {
+    id: "WB-2025-00848",
+    plate: "T 567 DEF",
+    movement: "Finished goods dispatch",
+    firstWeightKg: 24680,
+    secondWeightKg: 6480,
+    netWeightKg: 18200,
+    netWeight: "18,200 kg",
+    status: "completed",
+    driver: "Joseph Mwangi",
+    customer: "Sino-Cotton Exports",
+    product: "Lint bale",
+    completedAt: "2025-04-28 10:15",
+  },
+  {
+    id: "WB-2025-00849",
+    plate: "T 891 GHI",
+    movement: "Raw material receipt",
+    firstWeightKg: 31200,
+    secondWeightKg: null,
+    netWeightKg: null,
+    netWeight: "—",
+    status: "awaiting_second_weight",
+    driver: "Amani Juma",
+    customer: "East Africa Chemicals",
+    product: "Ginning lubricant",
+    completedAt: null,
+  },
+  {
+    id: "WB-2025-00850",
+    plate: "T 112 JKL",
+    movement: "Raw cotton receipt",
+    firstWeightKg: null,
+    secondWeightKg: null,
+    netWeightKg: null,
+    netWeight: "—",
+    status: "awaiting_first_weight",
+    driver: "Peter Njoroge",
+    customer: "Mvumi AMCOS",
+    product: "Seed cotton",
+    completedAt: null,
+  },
+  {
+    id: "WB-2025-00851",
+    plate: "T 334 MNO",
+    movement: "Packaging receipt",
+    firstWeightKg: 19850,
+    secondWeightKg: 4650,
+    netWeightKg: 15200,
+    netWeight: "15,200 kg",
+    status: "completed",
+    driver: "Hassan Omar",
+    customer: "Packaging Solutions Ltd",
+    product: "Jute bags",
+    completedAt: "2025-04-28 07:30",
+  },
+  {
+    id: "WB-2025-00852",
+    plate: "T 556 PQR",
+    movement: "Production transfer",
+    firstWeightKg: 22400,
+    secondWeightKg: 5800,
+    netWeightKg: 16600,
+    netWeight: "16,600 kg",
+    status: "completed",
+    driver: "David Oloo",
+    customer: "Internal — Ginning to Baling",
+    product: "Lint bale",
+    completedAt: "2025-04-27 16:55",
+  },
+  {
+    id: "WB-2025-00853",
+    plate: "T 778 STU",
+    movement: "Manual weigh",
+    firstWeightKg: 5340,
+    secondWeightKg: null,
+    netWeightKg: 5340,
+    netWeight: "5,340 kg",
+    status: "completed",
+    driver: "Grace Mutuku",
+    customer: "Stores",
+    product: "Cottonseed (surplus)",
+    completedAt: "2025-04-27 14:20",
+  },
+  {
+    id: "WB-2025-00854",
+    plate: "T 990 VWX",
+    movement: "Raw cotton receipt",
+    firstWeightKg: 26700,
+    secondWeightKg: null,
+    netWeightKg: null,
+    netWeight: "—",
+    status: "awaiting_second_weight",
+    driver: "James Odhiambo",
+    customer: "Iringa AMCOS",
+    product: "Seed cotton",
+    completedAt: null,
+  },
+];
+
+export const vehicles = [
+  { plate: "T 234 ABC", driver: "Mohamed Salim", transporter: "Trans Kilosa Ltd", lastSeen: "Today 08:42" },
+  { plate: "T 567 DEF", driver: "Joseph Mwangi", transporter: "East Africa Freight", lastSeen: "Today 10:15" },
+  { plate: "T 891 GHI", driver: "Amani Juma", transporter: "Northern Transport Co.", lastSeen: "Today 11:02" },
+  { plate: "T 112 JKL", driver: "Peter Njoroge", transporter: "Pan Africa Logistics", lastSeen: "Today 11:35" },
+  { plate: "T 334 MNO", driver: "Hassan Omar", transporter: "Morogoro Carriers", lastSeen: "Today 07:30" },
+  { plate: "T 556 PQR", driver: "David Oloo", transporter: "Tanzania Express Ltd", lastSeen: "Yesterday 16:55" },
+  { plate: "T 778 STU", driver: "Grace Mutuku", transporter: "Internal Fleet", lastSeen: "Yesterday 14:20" },
+  { plate: "T 990 VWX", driver: "James Odhiambo", transporter: "Iringa Transport Group", lastSeen: "Today 12:10" },
+];
+
+export const counterparties = [
+  { name: "Kilosa AMCOS", type: "AMCOS", location: "Kilosa, Morogoro", status: "active" },
+  { name: "Mvumi AMCOS", type: "AMCOS", location: "Mvumi, Dodoma", status: "active" },
+  { name: "Iringa AMCOS", type: "AMCOS", location: "Iringa", status: "active" },
+  { name: "Tanzania Cotton Board", type: "Customer", location: "Dar es Salaam", status: "active" },
+  { name: "Sino-Cotton Exports Ltd", type: "Customer", location: "Dar es Salaam", status: "active" },
+  { name: "East Africa Chemicals", type: "Supplier", location: "Nairobi, Kenya", status: "active" },
+  { name: "Packaging Solutions Ltd", type: "Supplier", location: "Dar es Salaam", status: "active" },
+  { name: "Trans Kilosa Ltd", type: "Transporter", location: "Kilosa, Morogoro", status: "active" },
+];
+
+export const materials = [
+  { code: "SCOT-001", name: "Seed Cotton", category: "Raw cotton", unit: "kg" },
+  { code: "LINT-001", name: "Lint Bale (Grade A)", category: "Finished goods", unit: "kg" },
+  { code: "LINT-002", name: "Lint Bale (Grade B)", category: "Finished goods", unit: "kg" },
+  { code: "CSED-001", name: "Cottonseed", category: "By-product", unit: "kg" },
+  { code: "BAGS-001", name: "Jute Bags", category: "Packaging", unit: "units" },
+  { code: "WRAP-001", name: "Bale Wrap", category: "Packaging", unit: "rolls" },
+  { code: "CHEM-001", name: "Ginning Lubricant", category: "Input", unit: "litres" },
+  { code: "FUEL-001", name: "Diesel", category: "Input", unit: "litres" },
+];
+
+export const sessions = [
+  { id: "WB-2025-00849", plate: "T 891 GHI", product: "Ginning lubricant", status: "awaiting_second_weight" },
+  { id: "WB-2025-00850", plate: "T 112 JKL", product: "Seed cotton", status: "awaiting_first_weight" },
+  { id: "WB-2025-00854", plate: "T 990 VWX", product: "Seed cotton", status: "awaiting_second_weight" },
+];
+
+export const pendingOrders = [
+  {
+    externalNoteId: "ORD-KIL-20250428-001",
+    businessUnit: "Cotton Procurement",
+    vehiclePlate: "T 445 YZA",
+    product: "Seed cotton",
+    driverName: "Rashid Bakari",
+    customerName: "Kilosa AMCOS",
+    collectionPoint: "Kilosa Collection A",
+    distanceKm: 145,
+    scheduledAt: "2025-04-28 14:00",
+  },
+  {
+    externalNoteId: "ORD-MVM-20250428-002",
+    businessUnit: "Cotton Procurement",
+    vehiclePlate: "T 667 BCD",
+    product: "Seed cotton",
+    driverName: "Suleiman Haji",
+    customerName: "Mvumi AMCOS",
+    collectionPoint: "Mvumi Centre",
+    distanceKm: 198,
+    scheduledAt: "2025-04-28 15:30",
+  },
+  {
+    externalNoteId: "ORD-DSP-20250428-003",
+    businessUnit: "Finished Goods",
+    vehiclePlate: "T 889 EFG",
+    product: "Lint bale",
+    driverName: "Peter Kamau",
+    customerName: "Sino-Cotton Exports Ltd",
+    collectionPoint: "Main warehouse",
+    distanceKm: null,
+    scheduledAt: "2025-04-28 16:00",
+  },
+];
+
+export const rawCottonFuelRows = [
+  {
+    amcosName: "Kilosa AMCOS",
+    collectionPoint: "Kilosa Collection A",
+    plate: "T 234 ABC",
+    distanceKm: 145,
+    fuelRatePerKm: 1500,
+    fuelCurrency: "TZS",
+    payable: 217500,
+  },
+  {
+    amcosName: "Kilosa AMCOS",
+    collectionPoint: "Kilosa Collection B",
+    plate: "T 334 MNO",
+    distanceKm: 145,
+    fuelRatePerKm: 1500,
+    fuelCurrency: "TZS",
+    payable: 195750,
+  },
+  {
+    amcosName: "Mvumi AMCOS",
+    collectionPoint: "Mvumi Centre",
+    plate: "T 990 VWX",
+    distanceKm: 198,
+    fuelRatePerKm: 1500,
+    fuelCurrency: "TZS",
+    payable: 297000,
+  },
+  {
+    amcosName: "Iringa AMCOS",
+    collectionPoint: "Iringa Hub",
+    plate: "T 556 PQR",
+    distanceKm: 312,
+    fuelRatePerKm: 1600,
+    fuelCurrency: "TZS",
+    payable: 499200,
+  },
+];
+
+export const reportCards = [
+  { title: "Weighings today", value: "12", detail: "8 receipts, 3 dispatches, 1 manual" },
+  { title: "Net weight today", value: "287.4 t", detail: "Seed cotton dominant at 68%" },
+  { title: "Tickets this week", value: "58", detail: "48 completed, 3 active, 7 cancelled" },
+  { title: "AMCOS fuel payable", value: "1,209,450 TZS", detail: "Across 4 collection points" },
+  { title: "Pending movements", value: "3", detail: "Scheduled for this afternoon" },
+  { title: "Pending approvals", value: "3", detail: "2 reprints, 1 weight override" },
+  { title: "Average dwell time", value: "24 min", detail: "First to second weigh" },
+  { title: "Heaviest load today", value: "31,200 kg", detail: "T 891 GHI — Ginning lubricant" },
+];
+
+export const auditItems = [
+  {
+    id: "AUD-001",
+    action: "Weight captured",
+    entity: "WB-2025-00847",
+    user: "Clerk: A. Mwangi",
+    detail: "First weight 28,450 kg confirmed — XK3190-DS1 stable",
+    timestamp: "2025-04-28 08:38",
+  },
+  {
+    id: "AUD-002",
+    action: "Ticket completed",
+    entity: "WB-2025-00847",
+    user: "Clerk: A. Mwangi",
+    detail: "Second weight 5,100 kg — net 23,350 kg",
+    timestamp: "2025-04-28 08:42",
+  },
+  {
+    id: "AUD-003",
+    action: "Weight captured",
+    entity: "WB-2025-00848",
+    user: "Clerk: J. Kariuki",
+    detail: "First weight 24,680 kg confirmed",
+    timestamp: "2025-04-28 09:55",
+  },
+  {
+    id: "AUD-004",
+    action: "Ticket completed",
+    entity: "WB-2025-00848",
+    user: "Clerk: J. Kariuki",
+    detail: "Net 18,200 kg dispatched to Sino-Cotton",
+    timestamp: "2025-04-28 10:15",
+  },
+  {
+    id: "AUD-005",
+    action: "Reprint requested",
+    entity: "WB-2025-00838",
+    user: "Clerk: J. Odhiambo",
+    detail: "Awaiting supervisor approval",
+    timestamp: "2025-04-28 10:32",
+  },
+  {
+    id: "AUD-006",
+    action: "Session opened",
+    entity: "WB-2025-00849",
+    user: "Clerk: A. Mwangi",
+    detail: "T 891 GHI — East Africa Chemicals",
+    timestamp: "2025-04-28 11:02",
+  },
+  {
+    id: "AUD-007",
+    action: "Session opened",
+    entity: "WB-2025-00850",
+    user: "Clerk: J. Kariuki",
+    detail: "T 112 JKL — Mvumi AMCOS",
+    timestamp: "2025-04-28 11:35",
+  },
+  {
+    id: "AUD-008",
+    action: "Movement note received",
+    entity: "ORD-KIL-20250428-001",
+    user: "System: API ingest",
+    detail: "Kilosa AMCOS seed cotton — scheduled 14:00",
+    timestamp: "2025-04-28 12:00",
+  },
+];
+
+export const approvals = [
+  {
+    item: "Ticket WB-2025-00838 — Reprint",
+    requestedBy: "Clerk: James Odhiambo",
+    reason: "Original ticket was smudged during printing",
+    status: "pending",
+    requestedAt: "2025-04-28 10:32",
+  },
+  {
+    item: "Weight override WB-2025-00841 — +120 kg",
+    requestedBy: "Clerk: Grace Mwangi",
+    reason: "Indicator reading cut off at tail end, scale confirmed stable",
+    status: "pending",
+    requestedAt: "2025-04-28 09:15",
+  },
+  {
+    item: "Ticket WB-2025-00835 — Cancellation",
+    requestedBy: "Clerk: Hassan Khalid",
+    reason: "Vehicle departed site before second weigh could be completed",
+    status: "approved",
+    requestedAt: "2025-04-27 17:10",
+  },
+];
+
+export const integrations = [
+  { name: "Order Management System", direction: "Inbound", endpoint: "/api/order-notes", status: "active" },
+  { name: "ANPR Camera (Gate 1)", direction: "Inbound", endpoint: "/api/camera-reads", status: "inactive" },
+  { name: "Finance Export", direction: "Outbound", endpoint: "Supabase view: v_finance_export", status: "active" },
+  { name: "Supabase Cloud DB", direction: "Bidirectional", endpoint: "supabase.co (configured)", status: "active" },
+];
+
+export const stationDevices = [
+  { name: "XK3190-DS1 Indicator", detail: "COM3 — 9600 baud — RS-232", status: "online" },
+  { name: "ANPR Camera (Gate 1)", detail: "IP: 192.168.1.100 — RTSP", status: "offline" },
+  { name: "Thermal Ticket Printer", detail: "USB — Epson TM-T88VI", status: "online" },
+];
+
+export const movementTypes = [
+  { name: "Raw cotton receipt", rule: "Requires AMCOS name, collection point, vehicle plate, driver" },
+  { name: "Raw material receipt", rule: "Requires supplier, product, plate, driver" },
+  { name: "Finished goods dispatch", rule: "Requires customer, product, destination, plate, driver" },
+  { name: "Production transfer", rule: "Requires from-department, to-department, product, quantity" },
+  { name: "Manual weigh", rule: "Requires plate, reason, and supervisor approval" },
+  { name: "Packaging receipt", rule: "Requires supplier, product type, plate, driver" },
+];
