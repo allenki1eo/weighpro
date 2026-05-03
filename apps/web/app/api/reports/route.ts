@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
       monthNetWeightKg: monthNetWeight._sum.netWeight ?? 0,
       pendingCount,
       awaitingSecondCount,
-      recentActivity: recentActivity.map((t) => ({
+      recentActivity: recentActivity.map((t: (typeof recentActivity)[number]) => ({
         id: t.id,
         ticketNumber: t.ticketNumber,
         plateNumber: t.vehicle.plateNumber,

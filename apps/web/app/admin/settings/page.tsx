@@ -9,7 +9,7 @@ export default async function SettingsPage() {
   if (!session || !['SUPER_ADMIN', 'ADMIN'].includes(session.user.role)) redirect('/dashboard')
 
   const settings = await prisma.systemSetting.findMany()
-  const map = Object.fromEntries(settings.map((s) => [s.key, s.value]))
+  const map = Object.fromEntries(settings.map((s: (typeof settings)[number]) => [s.key, s.value]))
 
   return (
     <div className="p-6 max-w-2xl space-y-5">

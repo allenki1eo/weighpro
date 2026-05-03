@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import type { Prisma } from '@prisma/client'
 import { generateTicketNumber } from '@/lib/ticket-number'
 import { z } from 'zod'
 
@@ -83,7 +84,7 @@ export async function GET(req: NextRequest) {
     prisma.weighingTicket.count({ where }),
   ])
 
-  const items = tickets.map((t) => ({
+  const items = tickets.map((t: (typeof tickets)[number]) => ({
     id: t.id,
     ticketNumber: t.ticketNumber,
     module: t.module,
@@ -118,7 +119,7 @@ export async function POST(req: NextRequest) {
 
   const ticketNumber = await generateTicketNumber()
 
-  const ticket = await prisma.$transaction(async (tx) => {
+  const ticket = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const t = await tx.weighingTicket.create({
       data: {
         ticketNumber,
