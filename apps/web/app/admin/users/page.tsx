@@ -45,7 +45,7 @@ export default async function UsersPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100">
-            {users.map((user) => (
+            {users.map((user: (typeof users)[number]) => (
               <tr key={user.id} className="hover:bg-zinc-50">
                 <td className="px-4 py-3 font-medium">{user.name}</td>
                 <td className="px-4 py-3 text-zinc-500">{user.email}</td>

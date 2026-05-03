@@ -36,7 +36,7 @@ export default async function AuditPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100">
-            {logs.map((log) => (
+            {logs.map((log: (typeof logs)[number]) => (
               <tr key={log.id} className="hover:bg-zinc-50">
                 <td className="px-4 py-2.5 text-xs text-zinc-400 font-mono">{fmt(log.createdAt, 'dd/MM HH:mm')}</td>
                 <td className="px-4 py-2.5">

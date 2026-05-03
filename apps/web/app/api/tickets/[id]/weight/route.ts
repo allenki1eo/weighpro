@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import type { Prisma } from '@prisma/client'
 import { getFirstWeightType, getSecondWeightType, calcNetWeight } from '@weighpro/core'
 import { z } from 'zod'
 
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (ticket.status === 'PENDING') {
     // Capture first weight
     const weightType = getFirstWeightType(op)
-    const updated = await prisma.$transaction(async (tx) => {
+    const updated = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const t = await tx.weighingTicket.update({
         where: { id },
         data: {
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const weightType = getSecondWeightType(op)
     const netWeight = calcNetWeight(ticket.firstWeight!, weightKg)
 
-    const updated = await prisma.$transaction(async (tx) => {
+    const updated = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const t = await tx.weighingTicket.update({
         where: { id },
         data: {
@@ -101,7 +102,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const second = isFirst ? ticket.secondWeight! : weightKg
     const netWeight = calcNetWeight(first, second)
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Audit BEFORE update
       await tx.auditLog.create({
         data: {

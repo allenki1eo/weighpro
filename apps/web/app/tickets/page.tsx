@@ -37,7 +37,7 @@ async function getTickets(searchParams: Record<string, string>) {
   ])
 
   return {
-    tickets: tickets.map((t) => ({
+    tickets: tickets.map((t: (typeof tickets)[number]) => ({
       id: t.id,
       ticketNumber: t.ticketNumber,
       module: t.module,

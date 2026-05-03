@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
   })
 
   return NextResponse.json(
-    vehicles.map((v) => ({
+    vehicles.map((v: (typeof vehicles)[number]) => ({
       id: v.id,
       plateNumber: v.plateNumber,
       driverName: v.driverName,

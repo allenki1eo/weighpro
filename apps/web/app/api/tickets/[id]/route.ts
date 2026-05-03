@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import type { Prisma } from '@prisma/client'
 
 const DETAIL_INCLUDE = {
   vehicle: { select: { plateNumber: true, vehicleType: true } },
@@ -51,7 +52,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const ticket = await prisma.weighingTicket.findUnique({ where: { id } })
   if (!ticket) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.weighingTicket.update({
       where: { id },
       data: {
@@ -90,7 +91,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (!['PENDING', 'FIRST_WEIGHT_SAVED'].includes(ticket.status)) {
       return NextResponse.json({ error: 'Cannot cancel a completed ticket' }, { status: 400 })
     }
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       await tx.weighingTicket.update({
         where: { id },
         data: { status: 'CANCELLED', cancelReason: body.reason ?? 'Cancelled' },

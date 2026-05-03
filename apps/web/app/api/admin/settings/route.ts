@@ -6,7 +6,7 @@ export async function GET() {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const settings = await prisma.systemSetting.findMany()
-  const map = Object.fromEntries(settings.map((s) => [s.key, s.value]))
+  const map = Object.fromEntries(settings.map((s: (typeof settings)[number]) => [s.key, s.value]))
   return NextResponse.json(map)
 }
 
