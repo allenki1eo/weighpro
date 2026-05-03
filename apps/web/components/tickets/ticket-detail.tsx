@@ -1,385 +1,238 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import Link from "next/link";
-import {
-  ArrowLeft,
-  CheckCircle2,
-  Clock,
-  Download,
-  Edit2,
-  FileText,
-  Save,
-  Scale,
-  Truck,
-  X,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import Link from 'next/link'
+import { ArrowLeft, Printer, CheckCircle2, Clock, User, Truck, Scale } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
+import { cn, fmt, fmtWeight, STATUS_COLORS, STATUS_LABELS, OP_LABELS } from '@/lib/utils'
+import { OPERATION_CONFIGS } from '@weighpro/core'
 
-type Ticket = {
-  id: string;
-  plate: string;
-  movement: string;
-  firstWeightKg: number | null;
-  secondWeightKg: number | null;
-  netWeightKg: number | null;
-  netWeight: string;
-  status: string;
-  driver: string;
-  transportCompany?: string;
-  customer: string;
-  product: string;
-  completedAt: string | null;
-};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function TicketDetail({ ticket, userRole }: { ticket: any; userRole: string }) {
+  const opConfig = OPERATION_CONFIGS[ticket.operationType as keyof typeof OPERATION_CONFIGS]
 
-function statusVariant(status: string) {
-  if (status === "completed") return "success";
-  if (status === "awaiting_second_weight") return "warning";
-  if (status === "awaiting_first_weight") return "info";
-  return "outline";
-}
+  const partyName =
+    ticket.cottonPurchase?.village?.name ??
+    ticket.lintBaleSale?.company?.name ??
+    ticket.wasteSale?.company?.name ??
+    ticket.seedDispatch?.village?.name ??
+    ticket.beverageDispatch?.customer?.name ??
+    ticket.rawMaterialIntake?.supplier?.name ??
+    ticket.maltWasteSale?.customer?.name ??
+    '—'
 
-interface EditableFields {
-  driver: string;
-  transportCompany: string;
-  customer: string;
-  product: string;
-  plate: string;
-  movement: string;
-  notes: string;
-}
-
-export function TicketDetail({ ticket }: { ticket: Ticket }) {
-  const [editing, setEditing] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [fields, setFields] = useState<EditableFields>({
-    driver: ticket.driver,
-    transportCompany: ticket.transportCompany ?? "—",
-    customer: ticket.customer,
-    product: ticket.product,
-    plate: ticket.plate,
-    movement: ticket.movement,
-    notes: "",
-  });
-  const [draft, setDraft] = useState<EditableFields>(fields);
-
-  function startEdit() {
-    setDraft({ ...fields });
-    setEditing(true);
-    setSaved(false);
-  }
-
-  function cancelEdit() {
-    setDraft(fields);
-    setEditing(false);
-  }
-
-  function saveEdit() {
-    setFields(draft);
-    setEditing(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
-  }
-
-  const completed = ticket.status === "completed";
+  const steps = [
+    {
+      label: 'Job Created',
+      done: true,
+      time: ticket.createdAt,
+      who: ticket.clerk?.name,
+      icon: <User className="w-3.5 h-3.5" />,
+    },
+    {
+      label: `1st Weight (${opConfig?.firstWeightType ?? 'GROSS'})`,
+      done: !!ticket.firstWeight,
+      time: ticket.firstWeightAt,
+      who: ticket.weighingClerk?.name,
+      value: ticket.firstWeight ? fmtWeight(ticket.firstWeight) : null,
+      icon: <Scale className="w-3.5 h-3.5" />,
+    },
+    {
+      label: `2nd Weight (${opConfig?.secondWeightType ?? 'TARE'})`,
+      done: !!ticket.secondWeight,
+      time: ticket.secondWeightAt,
+      who: ticket.weighingClerk?.name,
+      value: ticket.secondWeight ? fmtWeight(ticket.secondWeight) : null,
+      icon: <Scale className="w-3.5 h-3.5" />,
+    },
+    {
+      label: 'Completed',
+      done: ticket.status === 'COMPLETED',
+      time: ticket.secondWeightAt,
+      value: ticket.netWeight ? `Net: ${fmtWeight(ticket.netWeight)}` : null,
+      icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+    },
+  ]
 
   return (
-    <div>
-      {/* Header */}
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/tickets"
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Tickets
-          </Link>
+    <div className="space-y-5">
+      {/* Back + print */}
+      <div className="flex items-center justify-between">
+        <Link href="/tickets" className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900">
+          <ArrowLeft className="w-4 h-4" /> Back to Tickets
+        </Link>
+        <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-1.5">
+          <Printer className="w-3.5 h-3.5" /> Print
+        </Button>
+      </div>
+
+      {/* Header card */}
+      <div className="bg-white rounded-xl border border-zinc-200 p-5">
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="font-mono text-lg font-semibold">{ticket.id}</h1>
-            <div className="flex items-center gap-2 mt-0.5">
-              <Badge variant={statusVariant(ticket.status) as any}>
-                {ticket.status.replaceAll("_", " ")}
-              </Badge>
-              {ticket.completedAt && (
-                <span className="text-xs text-muted-foreground">
-                  Completed {ticket.completedAt}
-                </span>
+            <p className="font-mono font-bold text-2xl text-zinc-900">{ticket.ticketNumber}</p>
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              <Badge variant={ticket.module === 'COTTON' ? 'cotton' : 'beverage'}>{ticket.module}</Badge>
+              <span className={cn('inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium', STATUS_COLORS[ticket.status])}>
+                {STATUS_LABELS[ticket.status] ?? ticket.status}
+              </span>
+              <span className="text-sm text-zinc-500">{OP_LABELS[ticket.operationType] ?? ticket.operationType}</span>
+            </div>
+          </div>
+          {ticket.netWeight && (
+            <div className="text-right">
+              <p className="text-xs text-zinc-400">Net Weight</p>
+              <p className="font-mono font-black text-3xl text-emerald-700">{fmtWeight(ticket.netWeight)}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        {/* Vehicle & party */}
+        <div className="col-span-2 space-y-4">
+          <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
+            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wide flex items-center gap-1.5">
+              <Truck className="w-3.5 h-3.5" /> Vehicle
+            </h3>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-xs text-zinc-400">Plate</p>
+                <p className="font-bold font-mono tracking-wider text-lg">{ticket.vehicle?.plateNumber}</p>
+              </div>
+              <div>
+                <p className="text-xs text-zinc-400">Type</p>
+                <p className="font-medium">{ticket.vehicle?.vehicleType}</p>
+              </div>
+              <div>
+                <p className="text-xs text-zinc-400">Driver</p>
+                <p className="font-medium">{ticket.driverName}</p>
+              </div>
+              <div>
+                <p className="text-xs text-zinc-400">Phone</p>
+                <p className="font-medium">{ticket.driverPhone ?? '—'}</p>
+              </div>
+            </div>
+            <Separator />
+            <div>
+              <p className="text-xs text-zinc-400">Party</p>
+              <p className="font-semibold text-sm mt-0.5">{partyName}</p>
+            </div>
+          </div>
+
+          {/* Module-specific details */}
+          {ticket.cottonPurchase && (
+            <div className="bg-yellow-50 rounded-xl border border-yellow-200 p-4">
+              <h3 className="text-xs font-semibold text-yellow-700 uppercase tracking-wide mb-3">Cotton Purchase Details</h3>
+              <div className="grid grid-cols-3 gap-3 text-sm">
+                <div><p className="text-xs text-yellow-600">Village</p><p className="font-medium">{ticket.cottonPurchase.village?.name}</p></div>
+                <div><p className="text-xs text-yellow-600">Distance</p><p className="font-medium">{ticket.cottonPurchase.distanceKm} km</p></div>
+                <div><p className="text-xs text-yellow-600">Fuel Total</p><p className="font-medium">TZS {ticket.cottonPurchase.fuelTotal?.toLocaleString()}</p></div>
+                {ticket.cottonPurchase.cottonGrade && <div><p className="text-xs text-yellow-600">Grade</p><p className="font-bold">{ticket.cottonPurchase.cottonGrade}</p></div>}
+                {ticket.cottonPurchase.moisturePct && <div><p className="text-xs text-yellow-600">Moisture</p><p className="font-medium">{ticket.cottonPurchase.moisturePct}%</p></div>}
+              </div>
+            </div>
+          )}
+
+          {ticket.rawMaterialIntake && (
+            <div className="bg-sky-50 rounded-xl border border-sky-200 p-4">
+              <h3 className="text-xs font-semibold text-sky-700 uppercase tracking-wide mb-3">Raw Material Intake</h3>
+              <div className="grid grid-cols-3 gap-3 text-sm">
+                <div><p className="text-xs text-sky-600">Supplier</p><p className="font-medium">{ticket.rawMaterialIntake.supplier?.name}</p></div>
+                <div><p className="text-xs text-sky-600">Material</p><p className="font-bold">{ticket.rawMaterialIntake.materialType}</p></div>
+                {ticket.rawMaterialIntake.storageLocation && <div><p className="text-xs text-sky-600">Storage</p><p className="font-medium">{ticket.rawMaterialIntake.storageLocation}</p></div>}
+              </div>
+            </div>
+          )}
+
+          {ticket.notes && (
+            <div className="bg-zinc-50 rounded-xl border border-zinc-200 p-3">
+              <p className="text-xs text-zinc-400 mb-1">Notes</p>
+              <p className="text-sm text-zinc-700">{ticket.notes}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Right: Timeline + Weights */}
+        <div className="space-y-4">
+          {/* Weights */}
+          <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-3">
+            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wide flex items-center gap-1.5">
+              <Scale className="w-3.5 h-3.5" /> Weights
+            </h3>
+            <div className="space-y-2">
+              <div className={cn('p-2.5 rounded-lg border', ticket.firstWeight ? 'border-blue-200 bg-blue-50' : 'border-dashed border-zinc-200')}>
+                <p className="text-xs text-zinc-400">1st ({opConfig?.firstWeightType})</p>
+                <p className={cn('font-mono font-bold', ticket.firstWeight ? 'text-blue-700' : 'text-zinc-300')}>
+                  {fmtWeight(ticket.firstWeight)}
+                </p>
+                {ticket.firstWeightAt && <p className="text-xs text-zinc-400 mt-0.5">{fmt(ticket.firstWeightAt)}</p>}
+              </div>
+              <div className={cn('p-2.5 rounded-lg border', ticket.secondWeight ? 'border-purple-200 bg-purple-50' : 'border-dashed border-zinc-200')}>
+                <p className="text-xs text-zinc-400">2nd ({opConfig?.secondWeightType})</p>
+                <p className={cn('font-mono font-bold', ticket.secondWeight ? 'text-purple-700' : 'text-zinc-300')}>
+                  {fmtWeight(ticket.secondWeight)}
+                </p>
+                {ticket.secondWeightAt && <p className="text-xs text-zinc-400 mt-0.5">{fmt(ticket.secondWeightAt)}</p>}
+              </div>
+              {ticket.netWeight && (
+                <div className="p-2.5 rounded-lg border-2 border-emerald-400 bg-emerald-50">
+                  <p className="text-xs text-emerald-600">Net Weight</p>
+                  <p className="font-mono font-black text-xl text-emerald-700">{fmtWeight(ticket.netWeight)}</p>
+                </div>
               )}
             </div>
           </div>
-        </div>
 
-        <div className="flex flex-wrap gap-2">
-          {!editing && (
-            <>
-              <Button variant="outline" size="sm" onClick={startEdit}>
-                <Edit2 className="h-4 w-4" />
-                Edit details
-              </Button>
-              {completed && (
-                <Link
-                  href={`/tickets/${encodeURIComponent(ticket.id)}/certificate?print=1`}
-                  target="_blank"
-                  className={buttonVariants({ size: "sm" })}
-                >
-                  <Download className="h-4 w-4" />
-                  Download certificate
-                </Link>
-              )}
-              {completed && (
-                <Link
-                  href={`/tickets/${encodeURIComponent(ticket.id)}/certificate`}
-                  target="_blank"
-                  className={buttonVariants({ variant: "outline", size: "sm" })}
-                >
-                  <FileText className="h-4 w-4" />
-                  View certificate
-                </Link>
-              )}
-            </>
-          )}
-          {editing && (
-            <>
-              <Button variant="outline" size="sm" onClick={cancelEdit}>
-                <X className="h-4 w-4" />
-                Cancel
-              </Button>
-              <Button size="sm" onClick={saveEdit}>
-                <Save className="h-4 w-4" />
-                Save changes
-              </Button>
-            </>
-          )}
+          {/* Timeline */}
+          <div className="bg-white rounded-xl border border-zinc-200 p-4">
+            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5" /> Timeline
+            </h3>
+            <div className="relative">
+              <div className="absolute left-3.5 top-0 bottom-0 w-px bg-zinc-200" />
+              <div className="space-y-4">
+                {steps.map((step, i) => (
+                  <div key={i} className="flex items-start gap-3 relative">
+                    <div className={cn(
+                      'w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 z-10',
+                      step.done
+                        ? 'bg-emerald-500 border-emerald-500 text-white'
+                        : 'bg-white border-zinc-300 text-zinc-400'
+                    )}>
+                      {step.icon}
+                    </div>
+                    <div className="flex-1 min-w-0 pt-0.5">
+                      <p className={cn('text-xs font-semibold', step.done ? 'text-zinc-800' : 'text-zinc-400')}>{step.label}</p>
+                      {step.value && <p className="text-xs font-mono font-bold text-zinc-700">{step.value}</p>}
+                      {step.time && <p className="text-xs text-zinc-400">{fmt(step.time)}</p>}
+                      {step.who && <p className="text-xs text-zinc-400">{step.who}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {saved && (
-        <div className="mb-4 flex items-center gap-2 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-4 py-2.5 text-sm text-emerald-600 dark:text-emerald-400">
-          <CheckCircle2 className="h-4 w-4 shrink-0" />
-          Changes saved to this ticket.
+      {/* Audit log */}
+      {ticket.auditLogs?.length > 0 && (
+        <div className="bg-white rounded-xl border border-zinc-200 p-4">
+          <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-3">Audit Log</h3>
+          <div className="space-y-2">
+            {ticket.auditLogs.map((log: Record<string, unknown>, i: number) => (
+              <div key={i} className="flex items-start gap-3 text-xs text-zinc-600 py-1.5 border-b border-zinc-100 last:border-0">
+                <span className="text-zinc-400 flex-shrink-0 font-mono">{fmt(log.createdAt as string, 'HH:mm dd/MM')}</span>
+                <span className="font-semibold text-zinc-700">{(log.user as Record<string, string>)?.name}</span>
+                <span className="font-mono text-xs bg-zinc-100 px-1.5 py-0.5 rounded">{log.action as string}</span>
+                {log.reason ? <span className="text-zinc-500 italic">{String(log.reason)}</span> : null}
+              </div>
+            ))}
+          </div>
         </div>
       )}
-
-      <div className="grid gap-6 xl:grid-cols-[1fr_340px]">
-        {/* Main details */}
-        <div className="grid gap-6">
-          {/* Vehicle & movement */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Truck className="h-4 w-4 text-primary" />
-                Vehicle &amp; movement details
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="grid gap-1.5">
-                  <Label>Vehicle plate</Label>
-                  {editing ? (
-                    <Input
-                      value={draft.plate}
-                      onChange={(e) => setDraft({ ...draft, plate: e.target.value })}
-                    />
-                  ) : (
-                    <p className="font-mono text-sm font-medium">{fields.plate}</p>
-                  )}
-                </div>
-                <div className="grid gap-1.5">
-                  <Label>Driver name</Label>
-                  {editing ? (
-                    <Input
-                      value={draft.driver}
-                      onChange={(e) => setDraft({ ...draft, driver: e.target.value })}
-                    />
-                  ) : (
-                    <p className="text-sm">{fields.driver}</p>
-                  )}
-                </div>
-                <div className="grid gap-1.5">
-                  <Label>Transport company</Label>
-                  {editing ? (
-                    <Input
-                      value={draft.transportCompany}
-                      onChange={(e) => setDraft({ ...draft, transportCompany: e.target.value })}
-                    />
-                  ) : (
-                    <p className="text-sm">{fields.transportCompany}</p>
-                  )}
-                </div>
-                <div className="grid gap-1.5">
-                  <Label>Movement type</Label>
-                  {editing ? (
-                    <select
-                      className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      value={draft.movement}
-                      onChange={(e) => setDraft({ ...draft, movement: e.target.value })}
-                    >
-                      <option>Raw cotton receipt</option>
-                      <option>Raw material receipt</option>
-                      <option>Finished goods dispatch</option>
-                      <option>Production transfer</option>
-                      <option>Packaging receipt</option>
-                      <option>Manual weigh</option>
-                    </select>
-                  ) : (
-                    <p className="text-sm">{fields.movement}</p>
-                  )}
-                </div>
-                <div className="grid gap-1.5">
-                  <Label>Customer / Supplier / AMCOS</Label>
-                  {editing ? (
-                    <Input
-                      value={draft.customer}
-                      onChange={(e) => setDraft({ ...draft, customer: e.target.value })}
-                    />
-                  ) : (
-                    <p className="text-sm">{fields.customer}</p>
-                  )}
-                </div>
-                <div className="grid gap-1.5">
-                  <Label>Product / Material</Label>
-                  {editing ? (
-                    <Input
-                      value={draft.product}
-                      onChange={(e) => setDraft({ ...draft, product: e.target.value })}
-                    />
-                  ) : (
-                    <p className="text-sm">{fields.product}</p>
-                  )}
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="grid gap-1.5">
-                <Label>Notes / remarks</Label>
-                {editing ? (
-                  <textarea
-                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                    placeholder="Add any relevant notes for this ticket…"
-                    value={draft.notes}
-                    onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
-                  />
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    {fields.notes || "No notes added."}
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Weight measurements sidebar */}
-        <div className="grid gap-6 content-start">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Scale className="h-4 w-4 text-primary" />
-                Weight measurements
-              </CardTitle>
-              <CardDescription>XK3190-DS1 scale indicator readings</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-3">
-              <div className="rounded-md border">
-                <div className="flex items-center justify-between px-4 py-3">
-                  <span className="text-sm text-muted-foreground">First weighment</span>
-                  <span className="tabular-nums font-semibold">
-                    {ticket.firstWeightKg ? ticket.firstWeightKg.toLocaleString() + " kg" : "—"}
-                  </span>
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between px-4 py-3">
-                  <span className="text-sm text-muted-foreground">Second weighment</span>
-                  <span className="tabular-nums font-semibold">
-                    {ticket.secondWeightKg ? ticket.secondWeightKg.toLocaleString() + " kg" : "—"}
-                  </span>
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between bg-primary/5 px-4 py-3 rounded-b-md">
-                  <span className="text-sm font-medium">Net weight</span>
-                  <span className="tabular-nums text-lg font-bold text-primary">
-                    {ticket.netWeightKg ? ticket.netWeightKg.toLocaleString() + " kg" : "—"}
-                  </span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-                <div className="rounded-md bg-muted px-3 py-2">
-                  <div className="font-medium text-foreground">Indicator</div>
-                  <div>XK3190-DS1</div>
-                </div>
-                <div className="rounded-md bg-muted px-3 py-2">
-                  <div className="font-medium text-foreground">Unit</div>
-                  <div>Kilograms (kg)</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Status timeline */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Clock className="h-4 w-4 text-primary" />
-                Status timeline
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ol className="relative border-l border-border pl-5 space-y-4">
-                {[
-                  { label: "Ticket opened", done: true },
-                  {
-                    label: "First weight captured",
-                    done: ticket.firstWeightKg !== null,
-                    value: ticket.firstWeightKg
-                      ? ticket.firstWeightKg.toLocaleString() + " kg"
-                      : null,
-                  },
-                  {
-                    label: "Second weight captured",
-                    done: ticket.secondWeightKg !== null,
-                    value: ticket.secondWeightKg
-                      ? ticket.secondWeightKg.toLocaleString() + " kg"
-                      : null,
-                  },
-                  {
-                    label: "Ticket completed",
-                    done: ticket.status === "completed",
-                    value: ticket.completedAt,
-                  },
-                ].map((step) => (
-                  <li key={step.label} className="relative">
-                    <div
-                      className={`absolute -left-[1.375rem] mt-0.5 flex h-4 w-4 items-center justify-center rounded-full border-2 ${
-                        step.done
-                          ? "border-primary bg-primary"
-                          : "border-muted-foreground bg-background"
-                      }`}
-                    >
-                      {step.done && (
-                        <div className="h-1.5 w-1.5 rounded-full bg-primary-foreground" />
-                      )}
-                    </div>
-                    <p className={`text-sm font-medium ${step.done ? "" : "text-muted-foreground"}`}>
-                      {step.label}
-                    </p>
-                    {step.value && (
-                      <p className="text-xs text-muted-foreground">{step.value}</p>
-                    )}
-                  </li>
-                ))}
-              </ol>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
     </div>
-  );
+  )
 }

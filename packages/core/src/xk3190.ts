@@ -1,56 +1,35 @@
-import type { WeightReading, WeightUnit } from "./types.js";
+import type { ScaleReading } from './types.js'
 
-export interface ParseWeightOptions {
-  defaultUnit?: WeightUnit;
-  stableTokens?: string[];
-}
+// XK3190-DS1 outputs ASCII strings like: "ST,GS,  +00123.5kg\r\n" or "UN,GS,  +00123.5kg\r\n"
+// ST = stable, UN = unstable, GS = gross
 
-const DEFAULT_STABLE_TOKENS = ["ST", "STA", "STABLE", "S "];
+const WEIGHT_REGEX = /([SU][T|N]),\w+,\s*[+-]?\s*([\d.]+)\s*kg/i
 
-export function parseXk3190Frame(
-  frame: string,
-  options: ParseWeightOptions = {},
-): WeightReading | null {
-  const raw = frame.trim();
+export function parseXK3190Line(raw: string): ScaleReading | null {
+  const match = WEIGHT_REGEX.exec(raw.trim())
+  if (!match) return null
 
-  if (!raw) {
-    return null;
-  }
+  const stabilityCode = match[1].toUpperCase()
+  const weightKg = parseFloat(match[2])
 
-  const unitMatch = raw.match(/\b(kg|lb|t)\b/i) ?? raw.match(/(kg|lb|t)$/i);
-  const unit = (unitMatch?.[1]?.toLowerCase() as WeightUnit | undefined) ?? options.defaultUnit ?? "kg";
-  const numericMatch = raw.match(/[+-]?\d+(?:\.\d+)?/);
-
-  if (!numericMatch) {
-    return null;
-  }
-
-  const value = Number(numericMatch[0]);
-
-  if (!Number.isFinite(value)) {
-    return null;
-  }
-
-  const upper = raw.toUpperCase();
-  const stableTokens = options.stableTokens ?? DEFAULT_STABLE_TOKENS;
-  const stable = stableTokens.some((token) => upper.includes(token)) || !upper.includes("US");
+  if (isNaN(weightKg)) return null
 
   return {
-    raw,
-    value,
-    unit,
-    stable,
-    capturedAt: new Date().toISOString(),
-  };
+    raw: raw.trim(),
+    weightKg,
+    isStable: stabilityCode === 'ST',
+    timestamp: Date.now(),
+  }
 }
 
-export function convertToKg(value: number, unit: WeightUnit) {
-  switch (unit) {
-    case "kg":
-      return value;
-    case "t":
-      return value * 1000;
-    case "lb":
-      return value * 0.45359237;
-  }
+export function isWeightStable(readings: ScaleReading[], windowMs = 2000, maxStdDev = 0.5): boolean {
+  if (readings.length < 3) return false
+  const now = Date.now()
+  const recent = readings.filter((r) => now - r.timestamp <= windowMs && r.isStable)
+  if (recent.length < 3) return false
+
+  const weights = recent.map((r) => r.weightKg)
+  const mean = weights.reduce((a, b) => a + b, 0) / weights.length
+  const variance = weights.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / weights.length
+  return Math.sqrt(variance) <= maxStdDev
 }

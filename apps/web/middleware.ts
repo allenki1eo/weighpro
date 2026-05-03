@@ -1,50 +1,49 @@
-import { createServerClient } from "@supabase/ssr";
-import { NextResponse, type NextRequest } from "next/server";
+import { withAuth } from 'next-auth/middleware'
+import { NextResponse } from 'next/server'
 
-const publicPaths = ["/login"];
+export default withAuth(
+  function middleware(req) {
+    const token = req.nextauth.token
+    const { pathname } = req.nextUrl
 
-export async function middleware(request: NextRequest) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!token) return NextResponse.redirect(new URL('/login', req.url))
 
-  if (!url || !anonKey) {
-    return NextResponse.next();
-  }
+    const role = token.role as string
 
-  let response = NextResponse.next({ request });
-  const supabase = createServerClient(url, anonKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet: Array<{ name: string; value: string; options?: Parameters<typeof response.cookies.set>[2] }>) {
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
-      },
+    // Gate clerks can only access gate + common pages
+    const gateOnly = ['/bridge']
+    const bridgeOnly = ['/gate']
+
+    if (role === 'GATE_CLERK' && gateOnly.some((p) => pathname.startsWith(p))) {
+      return NextResponse.redirect(new URL('/gate', req.url))
+    }
+    if (role === 'BRIDGE_CLERK' && bridgeOnly.some((p) => pathname.startsWith(p))) {
+      return NextResponse.redirect(new URL('/bridge', req.url))
+    }
+
+    // Managers can't access admin
+    if (['MANAGER_COTTON', 'MANAGER_BEVERAGE'].includes(role) && pathname.startsWith('/admin')) {
+      return NextResponse.redirect(new URL('/reports', req.url))
+    }
+
+    return NextResponse.next()
+  },
+  {
+    callbacks: {
+      authorized: ({ token }) => !!token,
     },
-  });
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const isPublic = publicPaths.some((path) => request.nextUrl.pathname.startsWith(path));
-
-  if (!user && !isPublic) {
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/login";
-    redirectUrl.searchParams.set("next", request.nextUrl.pathname);
-    return NextResponse.redirect(redirectUrl);
   }
-
-  if (user && request.nextUrl.pathname === "/login") {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
-
-  return response;
-}
+)
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
-};
+  matcher: [
+    '/dashboard/:path*',
+    '/gate/:path*',
+    '/bridge/:path*',
+    '/tickets/:path*',
+    '/reports/:path*',
+    '/admin/:path*',
+    '/master/:path*',
+    '/audit/:path*',
+  ],
+}

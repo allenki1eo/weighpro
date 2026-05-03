@@ -1,0 +1,287 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums (SQLite: stored as strings) ─────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   // SUPER_ADMIN | ADMIN | GATE_CLERK | BRIDGE_CLERK | MANAGER_COTTON | MANAGER_BEVERAGE
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdTickets   WeighingTicket[] @relation("TicketCreatedBy")
+  weighedTickets   WeighingTicket[] @relation("TicketWeighedBy")
+  deletedTickets   WeighingTicket[] @relation("TicketDeletedBy")
+  auditLogs        AuditLog[]
+}
+
+model Vehicle {
+  id           String   @id @default(cuid())
+  plateNumber  String   @unique
+  driverName   String
+  driverPhone  String?
+  defaultTare  Float?
+  vehicleType  String   @default("TRUCK") // TRUCK | PICKUP
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tickets WeighingTicket[]
+}
+
+model WeighingTicket {
+  id               String    @id @default(cuid())
+  ticketNumber     String    @unique
+  module           String    // COTTON | BEVERAGE
+  operationType    String    // COTTON_PURCHASE | COTTON_LINT_SALE | COTTON_WASTE_SALE | COTTON_SEED_DISPATCH | BEVERAGE_DISPATCH | BEVERAGE_RAW_INTAKE | BEVERAGE_WASTE_SALE
+  status           String    @default("PENDING") // PENDING | FIRST_WEIGHT_SAVED | COMPLETED | CANCELLED
+
+  vehicleId        String
+  vehicle          Vehicle   @relation(fields: [vehicleId], references: [id])
+  driverName       String
+  driverPhone      String?
+
+  firstWeight      Float?
+  firstWeightType  String?   // GROSS | TARE
+  firstWeightAt    DateTime?
+  secondWeight     Float?
+  secondWeightType String?
+  secondWeightAt   DateTime?
+  netWeight        Float?
+  weightUnit       String    @default("KG")
+
+  clerkId          String
+  clerk            User      @relation("TicketCreatedBy", fields: [clerkId], references: [id])
+  weighingClerkId  String?
+  weighingClerk    User?     @relation("TicketWeighedBy", fields: [weighingClerkId], references: [id])
+
+  notes            String?
+  isDeleted        Boolean   @default(false)
+  deletedById      String?
+  deletedBy        User?     @relation("TicketDeletedBy", fields: [deletedById], references: [id])
+  deletedAt        DateTime?
+  cancelReason     String?
+
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  items            TicketItem[]
+  cottonPurchase   CottonPurchase?
+  lintBaleSale     LintBaleSale?
+  wasteSale        WasteSale?
+  seedDispatch     SeedDispatch?
+  beverageDispatch BeverageDispatch?
+  rawMaterialIntake RawMaterialIntake?
+  maltWasteSale    MaltWasteSale?
+  auditLogs        AuditLog[]
+}
+
+model TicketItem {
+  id          String  @id @default(cuid())
+  ticketId    String
+  ticket      WeighingTicket @relation(fields: [ticketId], references: [id])
+  productId   String
+  product     Product @relation(fields: [productId], references: [id])
+  quantity    Float
+  unitPrice   Float   @default(0)
+  totalPrice  Float   @default(0)
+  grade       String?
+  qualityNote String?
+}
+
+// ─── Cotton Module ──────────────────────────────────────────────────────────
+
+model CottonPurchase {
+  id            String  @id @default(cuid())
+  ticketId      String  @unique
+  ticket        WeighingTicket @relation(fields: [ticketId], references: [id])
+  villageId     String
+  village       Village @relation(fields: [villageId], references: [id])
+  distanceKm    Float
+  fuelRatePerKm Float   @default(200)
+  fuelTotal     Float
+  cottonGrade   String? // A | B | C
+  moisturePct   Float?
+  deductionKg   Float   @default(0)
+}
+
+model LintBaleSale {
+  id          String  @id @default(cuid())
+  ticketId    String  @unique
+  ticket      WeighingTicket @relation(fields: [ticketId], references: [id])
+  companyId   String
+  company     Company @relation(fields: [companyId], references: [id])
+  baleCount   Int     @default(0)
+  contractRef String?
+}
+
+model WasteSale {
+  id        String  @id @default(cuid())
+  ticketId  String  @unique
+  ticket    WeighingTicket @relation(fields: [ticketId], references: [id])
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  wasteType String? // COTTON_WASTE | MALT_WASTE
+  pricePerKg Float   @default(0)
+}
+
+model SeedObligation {
+  id                 String   @id @default(cuid())
+  villageId          String
+  village            Village  @relation(fields: [villageId], references: [id])
+  season             String
+  cottonSuppliedKg   Float    @default(0)
+  seedRatio          Float    @default(0.05)
+  seedOwedKg         Float    @default(0)
+  seedDispatchedKg   Float    @default(0)
+  remainingKg        Float    @default(0)
+  isFulfilled        Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  dispatches SeedDispatch[]
+
+  @@unique([villageId, season])
+}
+
+model SeedDispatch {
+  id           String  @id @default(cuid())
+  ticketId     String  @unique
+  ticket       WeighingTicket @relation(fields: [ticketId], references: [id])
+  villageId    String
+  village      Village @relation(fields: [villageId], references: [id])
+  season       String
+  quantityKg   Float
+  obligationId String
+  obligation   SeedObligation @relation(fields: [obligationId], references: [id])
+}
+
+// ─── Beverage Module ────────────────────────────────────────────────────────
+
+model BeverageDispatch {
+  id             String  @id @default(cuid())
+  ticketId       String  @unique
+  ticket         WeighingTicket @relation(fields: [ticketId], references: [id])
+  customerId     String
+  customer       Customer @relation(fields: [customerId], references: [id])
+  routeId        String?
+  deliveryProof  String?
+  signature      String?
+}
+
+model RawMaterialIntake {
+  id               String  @id @default(cuid())
+  ticketId         String  @unique
+  ticket           WeighingTicket @relation(fields: [ticketId], references: [id])
+  supplierId       String
+  supplier         Supplier @relation(fields: [supplierId], references: [id])
+  materialType     String  // RICE | MALT | BARLEY
+  storageLocation  String?
+  qualityPass      Boolean @default(true)
+  moistureContent  Float?
+}
+
+model MaltWasteSale {
+  id             String   @id @default(cuid())
+  ticketId       String   @unique
+  ticket         WeighingTicket @relation(fields: [ticketId], references: [id])
+  customerId     String
+  customer       Customer @relation(fields: [customerId], references: [id])
+  collectionDate DateTime?
+}
+
+// ─── Master Data ────────────────────────────────────────────────────────────
+
+model Village {
+  id         String  @id @default(cuid())
+  name       String  @unique
+  distanceKm Float
+  isActive   Boolean @default(true)
+  createdAt  DateTime @default(now())
+
+  cottonPurchases  CottonPurchase[]
+  seedObligations  SeedObligation[]
+  seedDispatches   SeedDispatch[]
+}
+
+model Company {
+  id        String  @id @default(cuid())
+  name      String  @unique
+  type      String  // LINT_BUYER | WASTE_BUYER
+  contact   String?
+  isActive  Boolean @default(true)
+  createdAt DateTime @default(now())
+
+  lintSales   LintBaleSale[]
+  wasteSales  WasteSale[]
+}
+
+model Customer {
+  id        String  @id @default(cuid())
+  name      String  @unique
+  type      String  // BEVERAGE_CUSTOMER | CATTLE_FARMER
+  contact   String?
+  isActive  Boolean @default(true)
+  createdAt DateTime @default(now())
+
+  beverageDispatches BeverageDispatch[]
+  maltWasteSales     MaltWasteSale[]
+}
+
+model Supplier {
+  id            String  @id @default(cuid())
+  name          String  @unique
+  materialTypes String  @default("[]") // JSON: ["RICE","MALT","BARLEY"]
+  contact       String?
+  isActive      Boolean @default(true)
+  createdAt     DateTime @default(now())
+
+  rawMaterialIntakes RawMaterialIntake[]
+}
+
+model Product {
+  id           String  @id @default(cuid())
+  name         String  @unique
+  module       String  // COTTON | BEVERAGE
+  type         String  // COTTON_RAW | LINT_BALE | COTTON_WASTE | COTTON_SEED | BEER | SODA | RICE | MALT | BARLEY | MALT_WASTE
+  defaultPrice Float   @default(0)
+  unit         String  @default("KG")
+  isActive     Boolean @default(true)
+  createdAt    DateTime @default(now())
+
+  ticketItems TicketItem[]
+}
+
+// ─── System ─────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  ticketId  String?
+  ticket    WeighingTicket? @relation(fields: [ticketId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String   // CREATE_JOB | EDIT_FIRST_WEIGHT | EDIT_SECOND_WEIGHT | DELETE_TICKET | OVERRIDE_FUEL | CANCEL_TICKET | etc.
+  oldValue  String?
+  newValue  String?
+  reason    String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+}
+
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}

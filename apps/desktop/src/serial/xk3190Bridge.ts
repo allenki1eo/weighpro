@@ -1,92 +1,58 @@
-import { parseXk3190Frame, type WeightReading } from "@weighpro/core";
-import { EventEmitter } from "node:events";
-import { ReadlineParser, SerialPort } from "serialport";
+import { SerialPort } from 'serialport'
+import { ReadlineParser } from '@serialport/parser-readline'
+import type { ScaleReading } from '@weighpro/core'
+import { parseXK3190Line, isWeightStable } from '@weighpro/core'
+import { EventEmitter } from 'events'
 
-interface BridgeOptions {
-  path: string;
-  baudRate: number;
-}
+export class XK3190Bridge extends EventEmitter {
+  private port: SerialPort | null = null
+  private readings: ScaleReading[] = []
+  private portPath: string
+  private baudRate: number
 
-interface BridgeEvents {
-  reading: [WeightReading];
-  error: [Error];
-}
-
-export interface Xk3190Bridge {
-  lastReading: WeightReading | null;
-  open: () => Promise<void>;
-  close: () => void;
-  reconnect: () => Promise<void>;
-  on: <K extends keyof BridgeEvents>(event: K, listener: (...args: BridgeEvents[K]) => void) => EventEmitter;
-}
-
-export function createXk3190Bridge(options: BridgeOptions): Xk3190Bridge {
-  const emitter = new EventEmitter();
-  let port: SerialPort | undefined;
-  let lastReading: WeightReading | null = null;
-
-  function createPort() {
-    port = new SerialPort({
-      path: options.path,
-      baudRate: options.baudRate,
-      autoOpen: false,
-    });
-
-    const parser = port.pipe(new ReadlineParser({ delimiter: "\r\n" }));
-
-    parser.on("data", (frame: string) => {
-      const reading = parseXk3190Frame(frame, {
-        defaultUnit: "kg",
-      });
-
-      if (!reading) {
-        return;
-      }
-
-      lastReading = reading;
-      emitter.emit("reading", reading);
-    });
-
-    port.on("error", (error) => emitter.emit("error", error));
+  constructor(portPath: string, baudRate = 1200) {
+    super()
+    this.portPath = portPath
+    this.baudRate = baudRate
   }
 
-  async function open() {
-    if (!port) {
-      createPort();
-    }
+  connect(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.port = new SerialPort(
+        { path: this.portPath, baudRate: this.baudRate, dataBits: 8, stopBits: 1, parity: 'none' },
+        (err) => { if (err) reject(err) else resolve() }
+      )
 
-    await new Promise<void>((resolve, reject) => {
-      port?.open((error) => {
-        if (error) {
-          emitter.emit("error", error);
-          reject(error);
-          return;
-        }
+      const parser = this.port.pipe(new ReadlineParser({ delimiter: '\r\n' }))
 
-        resolve();
-      });
-    });
+      parser.on('data', (line: string) => {
+        const reading = parseXK3190Line(line)
+        if (!reading) return
+
+        this.readings = [...this.readings.slice(-30), reading]
+        const stable = isWeightStable(this.readings)
+
+        const enriched: ScaleReading = { ...reading, isStable: stable }
+        this.emit('reading', enriched)
+      })
+
+      this.port.on('error', (err) => this.emit('error', err))
+      this.port.on('close', () => this.emit('close'))
+    })
   }
 
-  function close() {
-    if (port?.isOpen) {
-      port.close();
-    }
+  disconnect(): void {
+    this.port?.close()
+    this.port = null
+    this.readings = []
   }
 
-  async function reconnect() {
-    close();
-    port = undefined;
-    await open();
+  get isConnected(): boolean {
+    return this.port?.isOpen ?? false
   }
 
-  return {
-    get lastReading() {
-      return lastReading;
-    },
-    open,
-    close,
-    reconnect,
-    on: (event, listener) => emitter.on(event, listener),
-  };
+  static async listPorts(): Promise<string[]> {
+    const ports = await SerialPort.list()
+    return ports.map((p) => p.path)
+  }
 }

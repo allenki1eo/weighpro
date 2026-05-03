@@ -1,33 +1,30 @@
-import type { WeighSessionStatus } from "./types.js";
+import type { OperationType, WeightType } from './types.js'
 
-export function calculateNetWeightKg(firstWeightKg?: number, secondWeightKg?: number) {
-  if (firstWeightKg == null || secondWeightKg == null) {
-    return undefined;
-  }
-
-  return Math.abs(secondWeightKg - firstWeightKg);
+export function getFirstWeightType(op: OperationType): WeightType {
+  const grossFirst: OperationType[] = [
+    'COTTON_PURCHASE',
+    'COTTON_WASTE_SALE',
+    'COTTON_SEED_DISPATCH',
+    'BEVERAGE_RAW_INTAKE',
+    'BEVERAGE_WASTE_SALE',
+  ]
+  return grossFirst.includes(op) ? 'GROSS' : 'TARE'
 }
 
-export function nextSessionStatus(
-  status: WeighSessionStatus,
-  hasFirstWeight: boolean,
-  hasSecondWeight: boolean,
-): WeighSessionStatus {
-  if (status === "cancelled") {
-    return status;
-  }
-
-  if (hasFirstWeight && hasSecondWeight) {
-    return "completed";
-  }
-
-  if (hasFirstWeight) {
-    return "awaiting_second_weight";
-  }
-
-  return "awaiting_first_weight";
+export function getSecondWeightType(op: OperationType): WeightType {
+  return getFirstWeightType(op) === 'GROSS' ? 'TARE' : 'GROSS'
 }
 
-export function normalizePlate(plate: string) {
-  return plate.replace(/[^a-z0-9]/gi, "").toUpperCase();
+export function calcNetWeight(first: number, second: number): number {
+  return Math.abs(first - second)
+}
+
+export function calcFuelTotal(distanceKm: number, ratePerKm: number): number {
+  return distanceKm * ratePerKm
+}
+
+export function generateTicketNumber(sequence: number): string {
+  const year = new Date().getFullYear()
+  const padded = String(sequence).padStart(6, '0')
+  return `WB-${year}-${padded}`
 }
