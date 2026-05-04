@@ -9,5 +9,6 @@ coverage
 !.env.example
 *.log
 *.tsbuildinfo
+*.db
 Thumbs.db
 .DS_Store
