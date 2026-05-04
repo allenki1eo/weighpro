@@ -1,4 +1,4 @@
-import type { OperationType, WeightType } from './types.js'
+import type { OperationType, WeightType } from './types'
 
 export function getFirstWeightType(op: OperationType): WeightType {
   const grossFirst: OperationType[] = [

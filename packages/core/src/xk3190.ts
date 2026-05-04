@@ -1,4 +1,4 @@
-import type { ScaleReading } from './types.js'
+import type { ScaleReading } from './types'
 
 // XK3190-DS1 outputs ASCII strings like: "ST,GS,  +00123.5kg\r\n" or "UN,GS,  +00123.5kg\r\n"
 // ST = stable, UN = unstable, GS = gross
