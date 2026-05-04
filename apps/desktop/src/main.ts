@@ -39,6 +39,13 @@ async function startScale() {
 
   scaleBridge.on('reading', (reading: ScaleReading) => {
     mainWindow?.webContents.send('scale:reading', reading)
+    // Also POST to web for browser clients
+    const webUrl = WEB_URL.replace(/\/$/, '')
+    fetch(`${webUrl}/api/scale/reading`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-scale-token': process.env.SCALE_SECRET ?? 'dev-scale-secret' },
+      body: JSON.stringify({ weightKg: reading.weightKg, isStable: reading.isStable, raw: reading.raw }),
+    }).catch(() => { /* ignore network errors */ })
   })
 
   scaleBridge.on('error', (err: Error) => {

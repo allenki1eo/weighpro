@@ -6,7 +6,6 @@ import { signOut, useSession } from 'next-auth/react'
 import {
   Scale,
   Gauge,
-  DoorOpen,
   ClipboardList,
   BarChart3,
   Settings,
@@ -29,9 +28,8 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: <Gauge className="w-4 h-4" />, roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER_COTTON', 'MANAGER_BEVERAGE'] },
-  { label: 'Gate Terminal', href: '/gate', icon: <DoorOpen className="w-4 h-4" />, roles: ['SUPER_ADMIN', 'ADMIN', 'GATE_CLERK', 'BRIDGE_CLERK'] },
-  { label: 'Bridge Terminal', href: '/bridge', icon: <Scale className="w-4 h-4" />, roles: ['SUPER_ADMIN', 'ADMIN', 'GATE_CLERK', 'BRIDGE_CLERK'] },
-  { label: 'Tickets', href: '/tickets', icon: <ClipboardList className="w-4 h-4" />, roles: ['SUPER_ADMIN', 'ADMIN', 'GATE_CLERK', 'BRIDGE_CLERK', 'MANAGER_COTTON', 'MANAGER_BEVERAGE'] },
+  { label: 'Weighing Station', href: '/station', icon: <Scale className="w-4 h-4" />, roles: ['SUPER_ADMIN', 'ADMIN', 'CLERK', 'GATE_CLERK', 'BRIDGE_CLERK', 'MANAGER_COTTON', 'MANAGER_BEVERAGE'] },
+  { label: 'Tickets', href: '/tickets', icon: <ClipboardList className="w-4 h-4" />, roles: ['SUPER_ADMIN', 'ADMIN', 'CLERK', 'GATE_CLERK', 'BRIDGE_CLERK', 'MANAGER_COTTON', 'MANAGER_BEVERAGE'] },
   { label: 'Reports', href: '/reports', icon: <BarChart3 className="w-4 h-4" />, roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER_COTTON', 'MANAGER_BEVERAGE'] },
   { label: 'Master Data', href: '/admin/master', icon: <BookOpen className="w-4 h-4" />, roles: ['SUPER_ADMIN', 'ADMIN'] },
   { label: 'Audit Logs', href: '/admin/audit', icon: <Activity className="w-4 h-4" />, roles: ['SUPER_ADMIN', 'ADMIN'] },
