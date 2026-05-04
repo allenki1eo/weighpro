@@ -92,7 +92,7 @@ export default async function MasterDataPage() {
         </TabsContent>
         <TabsContent value="suppliers">
           <SimpleTable
-            data={suppliers.map((s) => ({
+            data={suppliers.map((s: (typeof suppliers)[number]) => ({
               ...s,
               materialTypes: JSON.parse(s.materialTypes).join(', '),
             }))}

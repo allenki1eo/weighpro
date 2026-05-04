@@ -14,7 +14,7 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const rows = await prisma.supplier.findMany({ where: { isActive: true }, orderBy: { name: 'asc' } })
   return NextResponse.json(
-    rows.map((s) => ({ ...s, materialTypes: JSON.parse(s.materialTypes) }))
+    rows.map((s: (typeof rows)[number]) => ({ ...s, materialTypes: JSON.parse(s.materialTypes) }))
   )
 }
 
