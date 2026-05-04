@@ -3,6 +3,7 @@
 export type UserRole =
   | 'SUPER_ADMIN'
   | 'ADMIN'
+  | 'CLERK'
   | 'GATE_CLERK'
   | 'BRIDGE_CLERK'
   | 'MANAGER_COTTON'
@@ -313,8 +314,9 @@ export const OPERATION_CONFIGS: Record<OperationType, OperationConfig> = {
 export const ROLE_LABELS: Record<UserRole, string> = {
   SUPER_ADMIN: 'Super Admin',
   ADMIN: 'Admin / Finance',
-  GATE_CLERK: 'Gate Clerk',
-  BRIDGE_CLERK: 'Bridge Clerk',
+  CLERK: 'Weighbridge Clerk',
+  GATE_CLERK: 'Weighbridge Clerk',
+  BRIDGE_CLERK: 'Weighbridge Clerk',
   MANAGER_COTTON: 'Cotton Manager',
   MANAGER_BEVERAGE: 'Beverage Manager',
 }
@@ -322,8 +324,9 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 export const ROLE_HOME: Record<UserRole, string> = {
   SUPER_ADMIN: '/dashboard',
   ADMIN: '/dashboard',
-  GATE_CLERK: '/gate',
-  BRIDGE_CLERK: '/bridge',
+  CLERK: '/station',
+  GATE_CLERK: '/station',
+  BRIDGE_CLERK: '/station',
   MANAGER_COTTON: '/reports',
   MANAGER_BEVERAGE: '/reports',
 }

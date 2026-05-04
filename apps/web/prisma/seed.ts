@@ -17,28 +17,16 @@ async function main() {
     },
   })
 
-  // Gate clerk
+  // Demo clerk
   const clerkPassword = await bcrypt.hash('clerk123', 10)
   await prisma.user.upsert({
-    where: { email: 'gate@weighpro.tz' },
+    where: { email: 'clerk@weighpro.tz' },
     update: {},
     create: {
-      name: 'Gate Clerk',
-      email: 'gate@weighpro.tz',
+      name: 'Demo Clerk',
+      email: 'clerk@weighpro.tz',
       password: clerkPassword,
-      role: 'GATE_CLERK',
-    },
-  })
-
-  // Bridge clerk
-  await prisma.user.upsert({
-    where: { email: 'bridge@weighpro.tz' },
-    update: {},
-    create: {
-      name: 'Bridge Clerk',
-      email: 'bridge@weighpro.tz',
-      password: clerkPassword,
-      role: 'BRIDGE_CLERK',
+      role: 'CLERK',
     },
   })
 
